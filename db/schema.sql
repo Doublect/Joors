@@ -4,7 +4,7 @@ DROP TABLE Account;
 CREATE TABLE Account (
     ID INTEGER,
     Username varchar(256) UNIQUE,
-    Password varchar(512),
+    Password varchar(256),
     CreationTime TIMESTAMP,
     PRIMARY KEY(ID)
 );
@@ -16,7 +16,7 @@ CREATE TABLE AccountGroup (
     GroupID int,
     PRIMARY KEY (ID),
     FOREIGN KEY (AccountID) REFERENCES Account(ID) ON DELETE CASCADE,
-    FOREIGN KEY (GroupID)   REFERENCES "Group"(ID) ON DELETE CASCADE
+    FOREIGN KEY (GroupID) REFERENCES "Group"(ID) ON DELETE CASCADE
 );
 
 DROP TABLE "Group";

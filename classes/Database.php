@@ -1,5 +1,11 @@
 <?php
 
+interface IDBConvert
+{
+    public static function fromRow(array $row) : object;
+    public static function fetchSingle(SQLite3Stmt $stmt) : object|false;
+    public static function fetch(SQLite3Stmt $stmt) : array|false;
+}
 
 class Database
 {

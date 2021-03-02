@@ -1,7 +1,7 @@
 <?php
 
 
-class Chore
+class Chore implements IDBConvert
 {
     public int $ID;
     public int $GroupID;
@@ -12,34 +12,79 @@ class Chore
     public bool $Completed;
     public int $CreationTime;
     public int $Deadline;
+
+    public static function fromRow(array $row) : Chore
+    {
+        $chore = new Chore();
+
+        $chore->ID = $row['ID'] ?? -1;
+        $chore->GroupID = $row['GroupID'] ?? -1;
+        $chore->AssignID = $row['AssignID'] ?? -1;
+        $chore->Name = $row['Name'] ?? "";
+        $chore->Colour = $row['Colour'] ?? "";
+        $chore->Desc = $row['Desc'] ?? "";
+        $chore->Completed = $row['Completed'] ?? -1;
+        $chore->CreationTime = $row['CreationTime'] ?? -1;
+        $chore->Deadline = $row['Deadline'] ?? -1;
+
+        return $chore;
+    }
+
+    public static function fetchSingle(SQLite3Stmt $stmt) : Chore|false {
+        if(($row = $stmt->execute()->fetchArray()) == false) {
+            $return = false;
+        } else {
+            $return = Chore::fromRow($row);
+        }
+
+        $stmt->close();
+        return $return;
+    }
+
+    public static function fetch(SQLite3Stmt $stmt) : array|false {
+        $res = $stmt->execute();
+
+        if(($row = $res->fetchArray()) == false) {
+            $return = false;
+        } else {
+            $return = array();
+            $return[0] = Chore::fromRow($row);
+
+            for($i = 1; ($row = $res->fetchArray()); $i++) {
+                $return[$i] = $row;
+            }
+        }
+
+        $stmt->close();
+        return $return;
+    }
 }
 
-class ChoreDB
+class ChoreDB extends Database
 {
-    private Database $db;
     private int $userID;
 
     function __construct($userid)
     {
-        $this->db = new Database();
         $this->userID = $userid;
+        parent::__construct();
     }
 
     // ------------------------------------------------------------------------
     // GET
 
-    function getChore(int $choreID) : SQLite3Stmt
+    function getChore(int $choreID) : Chore
     {
-        $stmt = $this->db->prepare("SELECT Chore.* FROM Chore, 'Group', AccountGroup WHERE Chore.ID = :choreID AND AccountGroup.AccountID = :userID");
+        $stmt = $this->prepare("SELECT Chore.* FROM Chore, 'Group', AccountGroup WHERE Chore.ID = :choreID AND AccountGroup.AccountID = :userID");
         $stmt->bindValue(":choreID", $choreID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
 
-        return $stmt;
+        return Chore::fetchSingle($stmt);
     }
 
     function getGroupChores(int $groupID) : SQLite3Stmt
     {
-        $stmt = $this->db->prepare("SELECT Chore.* FROM Chore, 'Group', AccountGroup WHERE Chore.GroupID = :groupID AND AccountGroup.AccountID = :userID");
+        $stmt = $this->prepare("SELECT Chore.* FROM Chore, 'Group', AccountGroup WHERE Chore.GroupID = :groupID AND AccountGroup.AccountID = :userID");
         $stmt->bindValue(":groupID", $groupID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
 
@@ -51,7 +96,7 @@ class ChoreDB
 
     function addChore(Chore $chore) : bool
     {
-        $stmt = $this->db->prepare("INSERT INTO Chore VALUES (NULL, :groupID, :assignID, :name, :colour, :desc, :complete, :creation, :deadline)");
+        $stmt = $this->prepare("INSERT INTO Chore VALUES (NULL, :groupID, :assignID, :name, :colour, :desc, :complete, :creation, :deadline)");
 
         $stmt->bindValue(":groupID", $chore->GroupID, SQLITE3_INTEGER);
         $stmt->bindValue(":assignID", $chore->AssignID, SQLITE3_INTEGER);
@@ -62,7 +107,7 @@ class ChoreDB
         $stmt->bindValue(":creation", $chore->CreationTime, SQLITE3_INTEGER);
         $stmt->bindValue(":deadline", $chore->Deadline, SQLITE3_INTEGER);
 
-        return $this->db->finish($stmt);
+        return $this->finish($stmt);
     }
 
     // ------------------------------------------------------------------------
@@ -70,11 +115,11 @@ class ChoreDB
 
     function removeChore(int $choreID) : bool
     {
-        $stmt = $this->db->prepare("DELETE FROM Chore WHERE ID = :choreID and groupID IN (SELECT GroupID FROM AccountGroup WHERE AccountID = :userID)");
+        $stmt = $this->prepare("DELETE FROM Chore WHERE ID = :choreID and groupID IN (SELECT GroupID FROM AccountGroup WHERE AccountID = :userID)");
         $stmt->bindValue(":choreID", $choreID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
 
-        return $this->db->finish($stmt);
+        return $this->finish($stmt);
     }
 
     // ------------------------------------------------------------------------
