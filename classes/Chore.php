@@ -1,7 +1,8 @@
 <?php
 
+require_once 'Database.php';
 
-class Chore implements IDBConvert
+class Chore implements IDBConvert, JsonSerializable
 {
     public int $ID;
     public int $GroupID;
@@ -58,6 +59,11 @@ class Chore implements IDBConvert
         $stmt->close();
         return $return;
     }
+
+    public function jsonSerialize()
+    {
+        return get_object_vars($this);
+    }
 }
 
 class ChoreDB extends Database
@@ -73,7 +79,7 @@ class ChoreDB extends Database
     // ------------------------------------------------------------------------
     // GET
 
-    function getChore(int $choreID) : Chore
+    function getChore(int $choreID) : Chore|false
     {
         $stmt = $this->prepare("SELECT Chore.* FROM Chore, 'Group', AccountGroup WHERE Chore.ID = :choreID AND AccountGroup.AccountID = :userID");
         $stmt->bindValue(":choreID", $choreID, SQLITE3_INTEGER);
@@ -82,13 +88,13 @@ class ChoreDB extends Database
         return Chore::fetchSingle($stmt);
     }
 
-    function getGroupChores(int $groupID) : SQLite3Stmt
+    function getGroupsChores(int $groupID) : array|false
     {
         $stmt = $this->prepare("SELECT Chore.* FROM Chore, 'Group', AccountGroup WHERE Chore.GroupID = :groupID AND AccountGroup.AccountID = :userID");
         $stmt->bindValue(":groupID", $groupID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
 
-        return $stmt;
+        return Chore::fetch($stmt);
     }
 
     // ------------------------------------------------------------------------
@@ -96,7 +102,7 @@ class ChoreDB extends Database
 
     function addChore(Chore $chore) : bool
     {
-        $stmt = $this->prepare("INSERT INTO Chore VALUES (NULL, :groupID, :assignID, :name, :colour, :desc, :complete, :creation, :deadline)");
+        $stmt = $this->prepare("INSERT INTO Chore (ID, GroupID, AssignID, Name, Colour, Desc, Completed, CreationTime, Deadline) VALUES (NULL, :groupID, :assignID, :name, :colour, :desc, :complete, :creation, :deadline)");
 
         $stmt->bindValue(":groupID", $chore->GroupID, SQLITE3_INTEGER);
         $stmt->bindValue(":assignID", $chore->AssignID, SQLITE3_INTEGER);

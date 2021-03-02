@@ -1,4 +1,4 @@
-INSERT INTO Account VALUES (NULL, 'Test', '$2y$10$K4AKMCXiarhpi86cyiuvb.fzKlGv6OX50m4xSHVz8MlhalLmfMQRG', 1613728906); -- TestPass
+INSERT INTO Account VALUES (NULL, 'hunor.liszka@protonmail.com', 'Test', '$2y$10$K4AKMCXiarhpi86cyiuvb.fzKlGv6OX50m4xSHVz8MlhalLmfMQRG', 1613728906); -- TestPass
 
 INSERT INTO AccountGroup VALUES (NULL, 1, 1);
 

@@ -1,11 +1,16 @@
 <?php
-class Session {
+class Session implements JsonSerializable {
     public int $OwnerID;
     public string $SessionKey;
 
     function __construct(int $OwnerID = 0, string $SessKey = "") {
         $this->OwnerID = $OwnerID;
         $this->SessionKey = $SessKey;
+    }
+
+    public function jsonSerialize()
+    {
+        return get_object_vars($this);
     }
 }
 

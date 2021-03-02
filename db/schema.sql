@@ -3,9 +3,11 @@
 DROP TABLE Account;
 CREATE TABLE Account (
     ID INTEGER,
+    Email varchar(320) UNIQUE,
     Username varchar(256) UNIQUE,
     Password varchar(256),
     CreationTime TIMESTAMP,
+    Verified BOOLEAN DEFAULT 0,
     PRIMARY KEY(ID)
 );
 
