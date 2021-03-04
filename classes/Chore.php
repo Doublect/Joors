@@ -81,7 +81,7 @@ class ChoreDB extends Database
 
     function getChore(int $choreID) : Chore|false
     {
-        $stmt = $this->prepare("SELECT Chore.* FROM Chore, 'Group', AccountGroup WHERE Chore.ID = :choreID AND AccountGroup.AccountID = :userID");
+        $stmt = $this->prepare("SELECT Chore.* FROM Chore, 'Group', UserGroup WHERE Chore.ID = :choreID AND UserGroup.AccountID = :userID");
         $stmt->bindValue(":choreID", $choreID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
 
@@ -90,7 +90,7 @@ class ChoreDB extends Database
 
     function getGroupsChores(int $groupID) : array|false
     {
-        $stmt = $this->prepare("SELECT Chore.* FROM Chore, 'Group', AccountGroup WHERE Chore.GroupID = :groupID AND AccountGroup.AccountID = :userID");
+        $stmt = $this->prepare("SELECT Chore.* FROM Chore, 'Group', UserGroup WHERE Chore.GroupID = :groupID AND UserGroup.AccountID = :userID");
         $stmt->bindValue(":groupID", $groupID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
 
@@ -121,7 +121,7 @@ class ChoreDB extends Database
 
     function removeChore(int $choreID) : bool
     {
-        $stmt = $this->prepare("DELETE FROM Chore WHERE ID = :choreID and groupID IN (SELECT GroupID FROM AccountGroup WHERE AccountID = :userID)");
+        $stmt = $this->prepare("DELETE FROM Chore WHERE ID = :choreID and groupID IN (SELECT GroupID FROM UserGroup WHERE AccountID = :userID)");
         $stmt->bindValue(":choreID", $choreID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
 

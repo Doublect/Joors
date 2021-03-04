@@ -6,10 +6,14 @@ class Input
         return htmlspecialchars($data, ENT_QUOTES, 'utf-8');
     }
 
-    static function test_input(string $data) : string
+    static function test_input(mixed $data) : mixed
     {
-        $data = trim($data);
-        $data = stripslashes($data);
-        return Input::clean($data);
+        if(gettype($data) === "string") {
+            $data = trim($data);
+            $data = stripslashes($data);
+            return Input::clean($data);
+        } else {
+            return $data;
+        }
     }
 }

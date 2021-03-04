@@ -64,7 +64,7 @@ class GroupDB extends Database
 
     function getGroup(int $userID) : Group|false
     {
-        $stmt = $this->prepare("SELECT Group.* FROM 'Group', AccountGroup WHERE AccountGroup.GroupID = :groupID AND AccountGroup.AccountID = :userID");
+        $stmt = $this->prepare("SELECT Group.* FROM 'Group', UserGroup WHERE UserGroup.GroupID = :groupID AND UserGroup.AccountID = :userID");
         $stmt->bindValue(":groupID", $this->groupID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $userID, SQLITE3_INTEGER);
 
@@ -87,7 +87,7 @@ class GroupDB extends Database
 
     function addMember(int $userID)
     {
-        $stmt = $this->prepare("INSERT INTO AccountGroup VALUES (NULL, :userID, :groupID)");
+        $stmt = $this->prepare("INSERT INTO UserGroup VALUES (NULL, :userID, :groupID)");
         $stmt->bindValue(":userID", $userID, SQLITE3_INTEGER);
         $stmt->bindValue(":groupID", $this->groupID, SQLITE3_INTEGER);
 
@@ -99,7 +99,7 @@ class GroupDB extends Database
 
     function removeGroup() : bool
     {
-        $stmt = $this->prepare("DELETE FROM 'Group' WHERE ID = :groupID AND ID IN (SELECT GroupID FROM AccountGroup WHERE AccountID = :userID)");
+        $stmt = $this->prepare("DELETE FROM 'Group' WHERE ID = :groupID AND ID IN (SELECT GroupID FROM UserGroup WHERE AccountID = :userID)");
         $stmt->bindValue(":groupID", $this->groupID, SQLITE3_INTEGER);
 
         return $this->finish($stmt);
@@ -107,7 +107,7 @@ class GroupDB extends Database
 
     function removeMember(int $userID) : bool
     {
-        $stmt = $this->prepare("DELETE FROM AccountGroup WHERE GroupID = :groupID AND AccountID = :userID");
+        $stmt = $this->prepare("DELETE FROM UserGroup WHERE GroupID = :groupID AND AccountID = :userID");
         $stmt->bindValue(":groupID", $this->groupID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $userID, SQLITE3_INTEGER);
 

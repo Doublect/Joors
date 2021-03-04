@@ -8,73 +8,91 @@ class Session implements JsonSerializable {
         $this->SessionKey = $SessKey;
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize() : array
     {
         return get_object_vars($this);
     }
+
+    public function jsonDeserialize($json) {
+        $class = json_decode($json);
+        foreach ($class AS $key => $value) $this->{$key} = $value;
+    }
 }
 
-class SessionDatabase{
-    private SQLite3 $database;
+require_once "../classes/Database.php";
+class SessionDB extends Database {
 
-    function __construct(){
+    function __construct()
+    {
+        parent::__construct();
+
+        // Override database location
         $this->database = $this->getConnection();
     }
 
-    function prepare(string $query) : SQLite3Stmt{
-        return $this->database->prepare($query);
-    }
-
     private function getConnection() : SQLite3{
-        return new SQLite3('session.db');
-    }
-}
-
-function checkSession(int $userID, string $sessKey) : bool {
-    $db = new SessionDatabase();
-
-    // Try to get session owned by user
-    $stmt = $db->prepare("SELECT * FROM Session WHERE OwnerID = :userID");
-    $stmt->bindValue(":userID", $userID, SQLITE3_INTEGER);
-    $arr = stmttoarr($stmt);    // stmttoarr returns false or a '2d array'
-
-    // If user has no session, just return
-    if(!$arr) {
-        return false;
+        return new SQLite3('../auth/session.db');
     }
 
-    // If session is expired or the key is incorrect, then remove it
-    if($arr[0]['ExpiryTime'] > time() || $arr[0]['SessionKey'] !== $sessKey){
-        $stmt = $db->prepare("DELETE FROM Session WHERE OwnerID = :userID");
+    // ------------------------------------------------------------------------
+    // CHECK
+
+    function checkSession(int $userID, string $sessKey) : bool {
+
+        // Try to get session owned by user
+        $stmt = $this->prepare("SELECT * FROM Session WHERE OwnerID = :userID");
         $stmt->bindValue(":userID", $userID, SQLITE3_INTEGER);
+        $arr = stmttoarr($stmt);    // stmttoarr returns false or a '2d array'
+
+        // If user has no session, just return
+        if(!$arr) {
+            return false;
+        }
+
+        // If session is expired or the key is incorrect, then remove it
+        if($arr[0]['ExpiryTime'] > time() || $arr[0]['SessionKey'] !== $sessKey){
+            $this->clearSessions($userID);
+            return false;
+        }
+
+        // There is a valid session, update session expiration
+        $stmt = $this->prepare("UPDATE Session SET ExpiryTime = :time WHERE OwnerID = :userID");
+        $stmt->bindValue(":userID", $userID, SQLITE3_INTEGER);
+        $stmt->bindValue(":time", time() + 300, SQLITE3_INTEGER);
+        return true;
+    }
+
+    // ------------------------------------------------------------------------
+    // ADD
+
+    function createSession(int $userID) : Session {
+
+        // Make sure there is no session active
+        $this->clearSessions($userID);
+
+        $sess = new Session();
+
+        // Generate session key
+        $sess->OwnerID = $userID;
+        $sess->SessionKey = md5(strval($userID) . strval(time()));
+
+        // Add session to database
+        $stmt = $this->prepare("INSERT INTO Session VALUES (NULL, :sessKey, :userID, :expiryTime)");
+        $stmt->bindValue(":sessKey", $sess->SessionKey, SQLITE3_TEXT);
+        $stmt->bindValue(":userID", $sess->OwnerID, SQLITE3_INTEGER);
+        $stmt->bindValue(":time", time() + 300, SQLITE3_INTEGER);
         $stmt->execute();
         $stmt->close();
 
-        return false;
+        return $sess;
     }
 
-    // There is a valid session, update session expiration
-    $stmt = $db->prepare("UPDATE Session SET ExpiryTime = :time WHERE OwnerID = :userID");
-    $stmt->bindValue(":userID", $userID, SQLITE3_INTEGER);
-    $stmt->bindValue(":time", time() + 300, SQLITE3_INTEGER);
-    return true;
-}
+    function clearSessions(int $userID) : bool
+    {
+        $stmt = $this->prepare("DELETE FROM Session WHERE OwnerID = :userID");
+        $stmt->bindValue(":userID", $userID, SQLITE3_INTEGER);
+        $stmt->execute();
 
-function createSession(int $userID) : Session{
-    $sess = new Session();
-    $db = new Database();
-
-    // Generate session key
-    $sess->OwnerID = $userID;
-    $sess->SessionKey = md5(strval($userID) . strval(time()));
-
-    // Add session to database
-    $stmt = $db->prepare("INSERT INTO Session VALUES (NULL, :sessKey, :userID, :expiryTime)");
-    $stmt->bindValue(":sessKey", $sess->SessionKey, SQLITE3_TEXT);
-    $stmt->bindValue(":userID", $sess->OwnerID, SQLITE3_INTEGER);
-    $stmt->bindValue(":time", time() + 300, SQLITE3_INTEGER);
-    $stmt->execute();
-    $stmt->close();
-
-    return $sess;
+        return $this->finish($stmt);
+    }
 }

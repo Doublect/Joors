@@ -9,48 +9,65 @@ interface IDBConvert
 
 class Database
 {
-    private SQLite3 $database;
+    protected SQLite3 $database;
 
-    function __construct(){
+    function __construct()
+    {
         $this->database = $this->getConnection();
     }
 
-    function __destruct() {
+    function __destruct()
+    {
         $this->database->close();
     }
 
-    function exec($query) {
+    function exec($query)
+    {
         $this->database->exec($query);
     }
 
-    function finish(SQLite3Stmt $stmt) : bool {
+    function exists(SQLite3Stmt $stmt) : bool
+    {
+        if($stmt->execute()->fetchArray() != false & $stmt->close()) return true;
+
+        return false;
+    }
+
+    function finish(SQLite3Stmt $stmt) : bool
+    {
         if($stmt->execute() != false & $stmt->close()) return true;
 
         return false;
     }
 
-    function query(string $query) : SQLite3Result {
+    function query(string $query) : SQLite3Result
+    {
         return $this->database->query($query);
     }
 
-    function querySingle(string $query) : SQLite3Result {
+    function querySingle(string $query) : SQLite3Result
+    {
         return $this->database->querySingle($query,true);
     }
 
-    function prepare(string $query) : SQLite3Stmt{
+    function prepare(string $query) : SQLite3Stmt
+    {
         return $this->database->prepare($query);
     }
 
-    function escapeString(string $string) : string {
+    function escapeString(string $string) : string
+    {
         return $this->database->escapeString($string);
     }
 
-    private function getConnection() : SQLite3 {
-        return new SQLite3('main.db');
+    private function getConnection() : SQLite3
+    {
+        return new SQLite3('../db/main.db');
     }
 }
 
-function stmttoarr(SQLite3Stmt $stmt) : array|false {
+function stmttoarr(SQLite3Stmt $stmt) : array|false
+{
     $res = $stmt->execute();
 
     if($res->numColumns() > 0) {
@@ -67,7 +84,8 @@ function stmttoarr(SQLite3Stmt $stmt) : array|false {
     return false;
 }
 
-function stmttojson(SQLite3Stmt $stmt) : string|false {
+function stmttojson(SQLite3Stmt $stmt) : string|false
+{
     $arr = stmttoarr($stmt);
 
     if(!$arr) {

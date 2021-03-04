@@ -1,7 +1,7 @@
 
 -- All credential necessary for user authorization
-DROP TABLE Account;
-CREATE TABLE Account (
+DROP TABLE User;
+CREATE TABLE User (
     ID INTEGER,
     Email varchar(320) UNIQUE,
     Username varchar(256) UNIQUE,
@@ -11,13 +11,13 @@ CREATE TABLE Account (
     PRIMARY KEY(ID)
 );
 
-DROP TABLE AccountGroup;
-CREATE TABLE AccountGroup (
+DROP TABLE UserGroup;
+CREATE TABLE UserGroup (
     ID INTEGER,
     AccountID int,
     GroupID int,
     PRIMARY KEY (ID),
-    FOREIGN KEY (AccountID) REFERENCES Account(ID) ON DELETE CASCADE,
+    FOREIGN KEY (AccountID) REFERENCES User (ID) ON DELETE CASCADE,
     FOREIGN KEY (GroupID) REFERENCES "Group"(ID) ON DELETE CASCADE
 );
 
@@ -41,5 +41,16 @@ CREATE TABLE Chore (
     Deadline DATETIME,
     PRIMARY KEY (ID),
     FOREIGN KEY (GroupID) REFERENCES "Group"(ID) ON DELETE CASCADE,
-    FOREIGN KEY (AssignID) REFERENCES Account(ID) ON DELETE CASCADE
+    FOREIGN KEY (AssignID) REFERENCES User (ID) ON DELETE CASCADE
 );
+
+
+DROP TABLE Invitation;
+CREATE TABLE Invitation (
+    ID INTEGER,
+    UserID int,
+    GroupID int,
+    PRIMARY KEY (ID),
+    FOREIGN KEY (UserID) REFERENCES User (ID) ON DELETE CASCADE,
+    FOREIGN KEY (GroupID) REFERENCES "Group"(ID) ON DELETE CASCADE
+)
