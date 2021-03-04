@@ -105,14 +105,14 @@ function registerForm() {
 
         let user = new User(null, obj['email'], obj['username'], obj['password'], null);
 
-        $.post("api/accountCreate.php", { User :JSON.stringify(user) },
+        $.post("api/accountCreate.php", { User : JSON.stringify(user) },
             function (data) {
 
                 console.log(data);
 
                 switch (data) {
                     case "2003":
-                        errors.append("Username is already taken.");
+                        errors.append("Name is already taken.");
                         break;
                     case "2004":
                         errors.append("Invalid email format.");

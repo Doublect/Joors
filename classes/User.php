@@ -7,20 +7,20 @@ class User implements IDBConvert, JsonSerializable
 {
     public int $ID;
     public string $Email;
-    public string $Username;
+    public string $Name;
     public string $Password;
     public int $CreationTime;
 
     public static function fromRow(array $row) : User
     {
-        $acc = new User();
+        $user = new User();
 
-        $acc->ID = $row['ID'] ?? -1;
-        $acc->Username = $row['Username'] ?? "";
-        $acc->Password = $row['Password'] ?? "";
-        $acc->CreationTime = $row['CreationTime'] ?? -1;
+        $user->ID = $row['ID'] ?? -1;
+        $user->Name = $row['Name'] ?? "";
+        $user->Password = $row['Password'] ?? "";
+        $user->CreationTime = $row['CreationTime'] ?? -1;
 
-        return $acc;
+        return $user;
     }
 
     public static function fetchSingle(SQLite3Stmt $stmt) : User|false {
@@ -52,17 +52,21 @@ class User implements IDBConvert, JsonSerializable
         return $return;
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize() : array
     {
         return get_object_vars($this);
     }
 
-    public function jsonDeserialize($json) {
+    public function jsonDeserialize($json) : User {
         $class = json_decode($json);
+        $user = new User();
+
         foreach ($class AS $key => $value) {
             if($value != null)
-                $this->{Input::test_input($key)} = Input::test_input($value);
+                $user->{Input::test_input($key)} = Input::test_input($value);
         }
+
+        return $user;
     }
 }
 
@@ -80,23 +84,23 @@ class UserDB extends Database
     // CHECKS
 
     function usernameExists(string $username) : bool {
-        $stmt = $this->prepare("SELECT Username FROM User WHERE Username = :uname");
+        $stmt = $this->prepare("SELECT Name FROM User WHERE Name = :uname");
         $stmt->bindValue(":uname", $username, SQLITE3_TEXT);
 
         return $this->exists($stmt);
     }
 
     function emailExists(string $email) : bool {
-        $stmt = $this->prepare("SELECT Username FROM User WHERE Email = :email");
+        $stmt = $this->prepare("SELECT Name FROM User WHERE Email = :email");
         $stmt->bindValue(":email", $email, SQLITE3_TEXT);
 
         return $this->exists($stmt);
     }
 
     function uniqueCheck(User $acc) : bool {
-        $stmt = $this->prepare("SELECT Username FROM User WHERE Email = :email OR Username = :uname");
+        $stmt = $this->prepare("SELECT Name FROM User WHERE Email = :email OR Name = :uname");
         $stmt->bindValue(":email", $acc->Email, SQLITE3_TEXT);
-        $stmt->bindValue(":uname", $acc->Username, SQLITE3_TEXT);
+        $stmt->bindValue(":uname", $acc->Name, SQLITE3_TEXT);
 
         return $this->exists($stmt);
     }
@@ -114,7 +118,7 @@ class UserDB extends Database
 
     function getUserByName(string $username) : User|false
     {
-        $stmt = $this->prepare("SELECT * FROM User WHERE Username = :uname");
+        $stmt = $this->prepare("SELECT * FROM User WHERE Name = :uname");
         $stmt->bindValue(":uname", $username, SQLITE3_TEXT);
 
         return User::fetchSingle($stmt);
@@ -133,9 +137,9 @@ class UserDB extends Database
 
     function addUser(User $acc) : bool
     {
-        $stmt = $this->prepare("INSERT INTO User(ID, Email, Username, Password, CreationTime) VALUES (NULL, :email, :uname, :passw, :creation)");
+        $stmt = $this->prepare("INSERT INTO User(ID, Email, Name, Password, CreationTime) VALUES (NULL, :email, :uname, :passw, :creation)");
         $stmt->bindValue(":email", $acc->Email, SQLITE3_TEXT);
-        $stmt->bindValue(":uname", $acc->Username, SQLITE3_TEXT);
+        $stmt->bindValue(":uname", $acc->Name, SQLITE3_TEXT);
         $stmt->bindValue(":passw", $acc->Password, SQLITE3_TEXT);
         $stmt->bindValue(":creation", $acc->CreationTime, SQLITE3_INTEGER);
 

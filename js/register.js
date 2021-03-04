@@ -38,7 +38,7 @@ $(document).ready( function () {
 
                 switch (data) {
                     case "2003":
-                        errors.append("Username is already taken.");
+                        errors.append("Name is already taken.");
                         break;
                     case "2004":
                         errors.append("Invalid email format.");

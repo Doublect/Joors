@@ -71,7 +71,12 @@ class GroupDB extends Database
         return Group::fetchSingle($stmt);
     }
 
-    //function getMembers()
+    function getMembers() : array|false {
+        $stmt = $this->prepare("SELECT User.ID, User.Name FROM User, UserGroup WHERE UserGroup.GroupID = :groupID");
+        $stmt->bindValue(":groupID", $this->groupID, SQLITE3_INTEGER);
+
+        return Group::fetch($stmt);
+    }
 
     // ------------------------------------------------------------------------
     // ADD

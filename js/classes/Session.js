@@ -8,5 +8,4 @@ class Session {
         this.OwnerID = OwnerID;
         this.SessionKey = SessionKey;
     }
-
 }
