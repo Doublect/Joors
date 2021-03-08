@@ -66,11 +66,15 @@ body {
 
 .sidebar .sbar-element {
     width: auto;
+    padding: 0 0 0 20px;
 }
 
+.sbar-element:hover {
+    filter: brightness(85%);
+}
 .contentbox {
-    margin-left: 320px;
-    padding-left: 30px;
+    margin: 10px 10px 10px 320px;
+    padding: 10px;
 }
 
 .text-center {

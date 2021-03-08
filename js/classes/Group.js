@@ -8,8 +8,8 @@ export default class Group {
 }
 
 export class GroupEntity {
-    //Chores;
-    Members = {};
+    Chores = [];
+    Members = [];
     Group;
 
     constructor(Group) {
@@ -32,25 +32,19 @@ function requestMembers(GroupEntity) {
 // GET
 
 export async function getChores(groupEntity) {
-    if(!groupEntity.Chores) {
-        let data = await requestChores(groupEntity);
-
-        groupEntity.Chores = JSON.parse(data);
-    }
+    let data = await requestChores(groupEntity);
+    groupEntity.Chores = JSON.parse(data);
     return groupEntity.Chores;
 }
 
 export async function getMembers(groupEntity) {
-    if(Object.getOwnPropertyNames(groupEntity.Members).length === 0) {
-        await requestMembers(groupEntity).then( function (data) {
-            let parsed = JSON.parse(data);
+    await requestMembers(groupEntity).then( function (data) {
+        let parsed = JSON.parse(data);
 
-            for (let i = 0; i < parsed.length; i++) {
-                groupEntity.Members[i] = Object.assign(new User, parsed[i]);
-            }
+        for (let i = 0; i < parsed.length; i++) {
+            groupEntity.Members.push(Object.assign(new User, parsed[i]));
+        }
+    });
 
-            console.log(groupEntity.Members)
-        });
-    }
     return groupEntity.Members;
 }

@@ -21,6 +21,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Query the database and return result
         if(($tasks = $taskDB->getGroupsTasks($groupID)) !== false) {
+            for($i = 0; $i < count($tasks); $i++){
+                $tasks[$i]->Assigned = $taskDB->getAssigned($tasks[$i]->ID);
+            }
+            //echo $tasks[0];
+
             echo json_encode($tasks);
         }
     }

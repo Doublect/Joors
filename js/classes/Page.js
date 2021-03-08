@@ -1,13 +1,11 @@
 export default class Page {
     PreviousPage;
     Head;
+    Link;
     ID;
 
     constructor(previous, current) {
         this.PreviousPage = previous;
-
-        let div = $("<div></div>");
-
 
         if(this.PreviousPage) {
             this.PreviousPage.hide();
@@ -16,21 +14,29 @@ export default class Page {
             this.ID = 0;
         }
 
-        div.attr("id", "content-" + this.ID);
+        this.Link = current;
 
-        $("#contentbox").append(div);
-        div.load(current);
+        loadPage(this);
+    }
 
-        this.Head = $("#content-" + this.ID);
+
+    onLoad() {
     }
 
     previous() {
         if(this.PreviousPage) {
-            Head.remove();
+            this.Head.remove();
             this.PreviousPage.show();
             return this.PreviousPage;
         } else return this;
     };
+
+    remove() {
+        if(this.PreviousPage) {
+            this.Head.remove();
+            return this.PreviousPage;
+        } else return this;
+    }
 
     show() {
         this.Head.show();
@@ -39,4 +45,18 @@ export default class Page {
     hide() {
         this.Head.hide();
     }
+}
+
+export function loadPage(page) {
+    let div = $("<div></div>");
+
+    div.attr("id", "content-" + page.ID);
+
+    $("#contentbox").append(div);
+
+    div.load(page.Link, function () {
+        page.onLoad();
+    })
+
+    page.Head = $("#content-" + page.ID);
 }

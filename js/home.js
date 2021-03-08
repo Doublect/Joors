@@ -1,11 +1,10 @@
 import Group, * as G from "./classes/Group.js";
-import User from "./classes/User.js";
 import Page from "./classes/Page.js";
+import GroupPage from "./classes/GroupPage.js";
 
 let groups = {};
-let users = {};
-let currentpage = new Page(undefined, 'homepage.html');
-
+export let users = {};
+let currentpage;
 
 $(function () {
     // Load groups
@@ -17,19 +16,33 @@ $(function () {
             default:
                 data = JSON.parse(data);
 
-                for(let i = 0; i < data.length; i++) {
+                for(let i = data.length; i >= 0; i--) {
                     let group = Object.assign(new Group, data[i]);
                     groups[group.ID] = new G.GroupEntity(group);
 
                     createGroupElement(group);
                 }
+
+                currentpage = new Page(undefined, 'homepage.html');
                 break;
         }
-
-        loadGroupPage(1);
     });
+
+    addControlBindings();
 });
 
+function addControlBindings() {
+    $("#previousbtn").on("click", function () {
+        currentpage = currentpage.previous();
+    });
+
+    $("#homebtn").on("click", function () {
+        while(currentpage.ID > 0) {
+            currentpage = currentpage.remove();
+        }
+        currentpage.show();
+    });
+}
 
 function createGroupElement(group) {
     const sidebar = $("#sidebar");
@@ -38,50 +51,13 @@ function createGroupElement(group) {
     p.addClass("sbar-element");
     p.attr("id", group.ID);
 
-    sidebar.append(p);
-}
+    p.on("click", function () {
+        loadGroupPage(group.ID);
+    });
 
-function createUserElement(user, pageID) {
-    const membersdiv = $("#content-" + pageID).children("#members");
-
-    let p = $("<p></p>").text(user.Name);
-
-    membersdiv.append(p);
-}
-
-function createTaskElement (task, pageID) {
-
+    sidebar.prepend(p);
 }
 
 function loadGroupPage(groupID) {
-    currentpage = new Page(currentpage, 'grouppage.html');
-
-    G.getMembers(groups[groupID]).then(
-        function (res) {
-            for(let i = 0; i < Object.getOwnPropertyNames(res).length; i++) {
-                let user = Object.assign(new User, res[i]);
-
-                if(!user[user.ID])
-                    users[user.ID] = user;
-
-                createUserElement(users[user.ID], currentpage.ID);
-            }
-        }, function () {
-            alert("Couldn't load members list!");
-        });
-
-    /*
-    G.getChores(groups[groupID]).then(
-        function (res) {
-            for(let i = 0; i < Object.getOwnPropertyNames(res).length; i++) {
-                let task = Object.assign(new User, res[i]);
-
-                if(!user[user.ID])
-                    users[user.ID] = user;
-
-                createUserElement(users[user.ID], currentpage.ID);
-            }
-        }, function () {
-            alert("Couldn't load members list!");
-        });*/
+    currentpage = new GroupPage(currentpage, 'grouppage.html', groups[groupID]);
 }

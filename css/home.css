@@ -1,0 +1,52 @@
+
+
+.box {
+    display: block;
+    justify-content: space-evenly;
+
+    padding: 10px 30px 10px 30px;
+    margin: 20px 0 20px 0;
+    width: auto;
+    background: wheat;
+}
+
+.box-element {
+    width: max-content;
+    vertical-align: center;
+
+
+    margin: 0 10px 0 10px;
+}
+
+.task {
+    margin: 10px 0 10px 0;
+    padding-bottom: 6px;
+    width: auto;
+    background: lightgray;
+}
+
+.task-header {
+    padding: 3px 2px 3px 2px;
+    height: fit-content;
+}
+
+.task-header-element {
+    display: inline-block;
+    padding: 3px 6px;
+    height: fit-content;
+    width: auto;
+    margin: 0;
+}
+
+.inline-element {
+    display: inline-block;
+    padding: 3px 6px;
+    height: fit-content;
+    width: auto;
+    margin: 2px;
+}
+
+.description {
+    max-width: 70%;
+    min-width: 50%;
+}

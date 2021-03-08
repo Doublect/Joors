@@ -6,14 +6,13 @@ class Task implements IDBConvert, JsonSerializable
 {
     public int $ID;
     public int $GroupID;
-    public int $AssignID;
     public string $Name;
     public string $Colour;
     public string $Desc;
     public bool $Completed;
     public int $CreationTime;
     public int $Deadline;
-    public array $assigned;
+    public array $Assigned;
 
     public static function fromRow(array $row) : Task
     {
@@ -54,7 +53,7 @@ class Task implements IDBConvert, JsonSerializable
             $return[0] = Task::fromRow($row);
 
             for($i = 1; ($row = $res->fetchArray()); $i++) {
-                $return[$i] = $row;
+                $return[$i] = Task::fromRow($row);
             }
         }
 
@@ -92,7 +91,7 @@ class TaskDB extends Database
 
     function getGroupsTasks(int $groupID) : array|false
     {
-        $stmt = $this->prepare("SELECT Task.* FROM Task, UserGroup WHERE Task.GroupID = :groupID AND UserGroup.AccountID = :userID");
+        $stmt = $this->prepare("SELECT Task.* FROM Task WHERE Task.GroupID = :groupID");
         $stmt->bindValue(":groupID", $groupID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
 
@@ -104,7 +103,13 @@ class TaskDB extends Database
         $stmt = $this->prepare("SELECT Assigned.UserID FROM Assigned WHERE Assigned.TaskID = :taskID");
         $stmt->bindValue(":taskID", $taskID, SQLITE3_INTEGER);
 
-        return Task::fetch($stmt);
+        $res = $stmt->execute();
+        $users = array();
+
+        for($i = 0; ($row = $res->fetchArray()); $i++) {
+            $users[$i] = $row["UserID"];
+        }
+        return $users;
     }
 
     // ------------------------------------------------------------------------
