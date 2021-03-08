@@ -1,6 +1,7 @@
 <?php
 
 require_once 'Database.php';
+require_once 'Group.php';
 require_once 'Input.php';
 
 class User implements IDBConvert, JsonSerializable
@@ -126,7 +127,7 @@ class UserDB extends Database
 
     function getUsersGroups() : array|false
     {
-        $stmt = $this->prepare("SELECT Group.* FROM 'Group', UserGroup WHERE UserGroup.AccountID = :userID");
+        $stmt = $this->prepare("SELECT 'Group'.* FROM 'Group', UserGroup WHERE UserGroup.AccountID = :userID");
         $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
 
         return Group::fetch($stmt);

@@ -5,7 +5,7 @@ require_once 'Database.php';
 class Group implements IDBConvert
 {
     public int $ID;
-    public int $Name;
+    public string $Name;
 
     public static function fromRow(array $row) : Group
     {
@@ -64,7 +64,7 @@ class GroupDB extends Database
 
     function getGroup(int $userID) : Group|false
     {
-        $stmt = $this->prepare("SELECT Group.* FROM 'Group', UserGroup WHERE UserGroup.GroupID = :groupID AND UserGroup.AccountID = :userID");
+        $stmt = $this->prepare("SELECT 'Group'.* FROM 'Group', UserGroup WHERE UserGroup.GroupID = :groupID AND UserGroup.AccountID = :userID");
         $stmt->bindValue(":groupID", $this->groupID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $userID, SQLITE3_INTEGER);
 

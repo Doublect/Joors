@@ -1,50 +1,56 @@
-class Group {
+import User from "./User.js";
+
+export default class Group {
     constructor(ID, Name) {
         this.ID = ID;
         this.Name = Name;
     }
 }
 
-class GroupEntity {
-    chores;
-    members;
+export class GroupEntity {
+    //Chores;
+    Members = {};
     Group;
 
     constructor(Group) {
         this.Group = Group;
     }
+}
 
+// ------------------------------------------------------------------------
+// REQUEST
 
-    // ------------------------------------------------------------------------
-    // REQUEST
+function requestChores(GroupEntity) {
+    return $.post("api/groupTasksGet.php", {GroupID: GroupEntity.Group.ID, Session: localStorage.getItem('Session')});
+}
 
-    requestChores() {
-        let session = localStorage.getItem('Session');
-        return $.post("api/groupTasksGet.php", {GroupID: this.Group.ID, Session: JSON.stringify(session)});
+function requestMembers(GroupEntity) {
+    return $.post("api/groupMembersGet.php", {GroupID: GroupEntity.Group.ID, Session: localStorage.getItem('Session')});
+}
+
+// ------------------------------------------------------------------------
+// GET
+
+export async function getChores(groupEntity) {
+    if(!groupEntity.Chores) {
+        let data = await requestChores(groupEntity);
+
+        groupEntity.Chores = JSON.parse(data);
     }
+    return groupEntity.Chores;
+}
 
-    requestMembers() {
-        let session = localStorage.getItem('Session');
-        return $.post("api/groupMembersGet.php", {GroupID: this.Group.ID, Session: JSON.stringify(session)});
+export async function getMembers(groupEntity) {
+    if(Object.getOwnPropertyNames(groupEntity.Members).length === 0) {
+        await requestMembers(groupEntity).then( function (data) {
+            let parsed = JSON.parse(data);
+
+            for (let i = 0; i < parsed.length; i++) {
+                groupEntity.Members[i] = Object.assign(new User, parsed[i]);
+            }
+
+            console.log(groupEntity.Members)
+        });
     }
-
-    // ------------------------------------------------------------------------
-    // GET
-
-    async getChores() {
-        if(!this.chores) {
-
-            let data = await this.requestChores();
-
-            this.chores = JSON.parse(data);
-        }
-        return this.chores;
-    }
-
-    async getMembers() {
-        if(!this.members) {
-
-        }
-        return this.members;
-    }
+    return groupEntity.Members;
 }

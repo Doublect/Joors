@@ -6,12 +6,12 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
     ini_set("display_errors",1);
 
     // Check if variables are set
-    if(isset($_POST['Name']) && isset($_POST['Password'])){
+    if(isset($_POST['Username']) && isset($_POST['Password'])){
         require_once "../classes/User.php";
         require_once "../classes/Input.php";
 
         // Clean inputs
-        $uname = Input::test_input($_POST['Name']);
+        $uname = Input::test_input($_POST['Username']);
         $pass = Input::test_input($_POST['Password']);
 
         // We don't have a userID

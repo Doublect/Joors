@@ -3,6 +3,9 @@
 if($_SERVER["REQUEST_METHOD"] == "POST") {
     if(isset($_POST['GroupID']) && isset($_POST['Session'])){
 
+        require_once "../auth/Session.php";
+
+        // Get the session object
         $sess = Session::jsonDeserialize($_POST['Session']);
 
         // Check if session exists
@@ -11,13 +14,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         }
 
-        // Create choreDB for user
+        // Create taskDB for user
         require_once "../classes/Task.php";
         $groupID = intval(Input::test_input($_POST['GroupID']));
-        $choreDB = new TaskDB($sess->OwnerID);
+        $taskDB = new TaskDB($sess->OwnerID);
 
-        if(($chores = $choreDB->getGroupsTasks($groupID)) !== false) {
-            echo json_encode($chores);
+        // Query the database and return result
+        if(($tasks = $taskDB->getGroupsTasks($groupID)) !== false) {
+            echo json_encode($tasks);
         }
     }
 }

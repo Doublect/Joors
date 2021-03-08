@@ -17,6 +17,14 @@ body {
     overflow: hidden;
     margin:0;
     padding:0;
+
+    top: 0;
+    left: 0;
+    right: 0;
+
+    position: sticky;
+
+    z-index: 100;
 }
 
 .bar .bar-element {
@@ -38,28 +46,31 @@ body {
     filter: brightness(85%);
 }
 
-.navbar {
-    position: sticky;
+.sidebar {
+    height: 100%;
+    width: 320px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+
+    background-color: blue;
+    color: wheat;
+    position: fixed;
+
+    overflow-x: hidden;
+    overflow-y: scroll;
+
+    padding-top: 40px;
+    z-index: 90;
 }
 
-#tasklist {
-    width: 80%;
+.sidebar .sbar-element {
+    width: auto;
 }
 
-.top {
-    top: 0!important;
-    position: fixed!important;
-    width: 100%!important;
-}
-
-.left {
-    left: 0!important;
-    position: fixed!important;
-}
-
-.right {
-    right: 0!important;
-    position: fixed!important;
+.contentbox {
+    margin-left: 320px;
+    padding-left: 30px;
 }
 
 .text-center {

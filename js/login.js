@@ -1,4 +1,5 @@
-import {User} from "./classes/User.js";
+import User from "./classes/User.js";
+import Session from "./classes/Session.js";
 
 $(function () {
 
@@ -31,7 +32,7 @@ function loginForm() {
     $("#loginform").on("submit", function (event) {
         event.preventDefault();
 
-        let array = $("#registerform").serializeArray();
+        let array = $("#loginform").serializeArray();
         let obj = {};
         let errors = $("#lerrors")
 
@@ -53,22 +54,33 @@ function loginForm() {
         $.post("api/accountLogin.php", { Username : Username, Password : Password },
             function (data) {
 
-                console.log(data);
+                switch (data) {
+                    case "2000":
+                        errors.append("No account");
+                        break;
+                    case "2001":
+                        errors.append("Incorrect password");
+                        break;
+                    default:
+                        data = JSON.parse(data);
 
+                        localStorage.setItem("User", JSON.stringify(data.User));
+                        localStorage.setItem("Session", JSON.stringify(data.Session));
+
+                        window.location.href = "home.html";
+                        break;
+                }
+
+                /*
                 if(data === "2000") {
                     errors.append("No account");
                 } else {
                     if (data === "2001") {
                         errors.append("Incorrect password");
                     } else {
-                        data = JSON.parse(data);
 
-                        localStorage.setItem("Account", data.Account);
-                        localStorage.setItem("Session", data.Session);
-
-                        window.location.href = "home.html";
                     }
-                }
+                }*/
             });
     });
 }
@@ -123,12 +135,11 @@ function registerForm() {
                     default:
                         data = JSON.parse(data);
 
-                        localStorage.setItem("Account", data.Account);
-                        localStorage.setItem("Session", data.Session);
+                        localStorage.setItem("User", JSON.stringify(data.User));
+                        localStorage.setItem("Session", JSON.stringify(data.Session));
 
                         window.location.href = "home.html";
                         break;
-
                 }
             });
     });

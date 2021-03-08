@@ -1,4 +1,6 @@
 <?php
+require_once "../classes/Input.php";
+
 class Session implements JsonSerializable {
     public int $OwnerID;
     public string $SessionKey;
@@ -14,7 +16,7 @@ class Session implements JsonSerializable {
     }
 
     public static function jsonDeserialize($json) : Session{
-        $class = json_decode($json);
+        $class = json_decode(urldecode($json));
         $sess = new Session();
 
         foreach ($class AS $key => $value) {

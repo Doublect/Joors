@@ -83,7 +83,7 @@ class TaskDB extends Database
 
     function getTask(int $taskID) : Task|false
     {
-        $stmt = $this->prepare("SELECT Task.* FROM Task, 'Group', UserGroup WHERE Task.ID = :taskID AND UserGroup.AccountID = :userID");
+        $stmt = $this->prepare("SELECT Task.* FROM Task, UserGroup WHERE Task.ID = :taskID AND UserGroup.AccountID = :userID");
         $stmt->bindValue(":taskID", $taskID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
 
@@ -92,7 +92,7 @@ class TaskDB extends Database
 
     function getGroupsTasks(int $groupID) : array|false
     {
-        $stmt = $this->prepare("SELECT Task.* FROM Task, 'Group', UserGroup WHERE Task.GroupID = :groupID AND UserGroup.AccountID = :userID");
+        $stmt = $this->prepare("SELECT Task.* FROM Task, UserGroup WHERE Task.GroupID = :groupID AND UserGroup.AccountID = :userID");
         $stmt->bindValue(":groupID", $groupID, SQLITE3_INTEGER);
         $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
 
@@ -101,7 +101,10 @@ class TaskDB extends Database
 
     function getAssigned(int $taskID) : array|false
     {
-        return false;
+        $stmt = $this->prepare("SELECT Assigned.UserID FROM Assigned WHERE Assigned.TaskID = :taskID");
+        $stmt->bindValue(":taskID", $taskID, SQLITE3_INTEGER);
+
+        return Task::fetch($stmt);
     }
 
     // ------------------------------------------------------------------------

@@ -1,8 +1,8 @@
 'use strict';
 
-class Session {
-    //OwnerID = 0;
-    //SessionKey = "";
+export default class Session {
+    OwnerID;
+    SessionKey;
 
     constructor(OwnerID, SessionKey) {
         this.OwnerID = OwnerID;
