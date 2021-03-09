@@ -1,8 +1,8 @@
 import * as G from "./Group.js";
-import User from "./User.js";
 import Task from "./Task.js";
 import Page from "./Page.js";
 import {users, goHome, loadGroups} from "../home.js";
+import * as Library from "../Library.js";
 
 export default class GroupPage extends Page {
     groupEntity;
@@ -17,6 +17,7 @@ export default class GroupPage extends Page {
         let groupEntity = this.groupEntity;
         let membersreq;
         let newtaskassign = $("#assigned");
+        let taskForm = $("#taskcreate");
 
         createHeaderElement(this.groupEntity.Group, pageID);
 
@@ -56,6 +57,11 @@ export default class GroupPage extends Page {
         $("#removebtn").on("click", function (event) {
             event.preventDefault();
             groupMemberChange($("#username")[0].value, groupEntity, "Remove", pageID);
+        });
+
+        taskForm.find("#submit").on("click", function (event){
+            event.preventDefault();
+            parseNewTaskForm(taskForm, groupEntity.Group.ID);
         });
 
         if (this.groupEntity.Chores.length === 0) {
@@ -140,7 +146,8 @@ function deleteUserElement(user, pageID) {
     $("#content-" + pageID).find("#members").children().remove("p:contains(" + user.Name + ")");
 }
 
-function addUserNewTaskOption(user, elem) {
+function addUserNewTaskOption(user, elem)
+{
     let option = $("<option></option>");
 
     option.attr("id", user.ID);
@@ -149,7 +156,8 @@ function addUserNewTaskOption(user, elem) {
     elem.append(option);
 }
 
-export function createTaskElement(task, pageID) {
+export function createTaskElement(task, pageID)
+{
     const tasksdiv = $("#content-" + pageID).find("#tasks");
 
     let taskElem = $($.parseHTML(taskSnippet));
@@ -170,7 +178,8 @@ export function createTaskElement(task, pageID) {
     tasksdiv.append(taskElem);
 }
 
-function groupMemberChange(Username, groupEntity, action, pageID) {
+function groupMemberChange(Username, groupEntity, action, pageID)
+{
     $.post("api/groupMembership.php", { Action : action, Username : Username, GroupID : groupEntity.Group.ID, Session : localStorage.getItem("Session")},
         function (data) {
             if(data === "") {
@@ -178,8 +187,7 @@ function groupMemberChange(Username, groupEntity, action, pageID) {
             }
 
             if(data === "2002") {
-                localStorage.clear();
-                window.location.href = "index.html";
+                Library.LogOut();
                 return;
             }
 
@@ -198,7 +206,8 @@ function groupMemberChange(Username, groupEntity, action, pageID) {
         });
 }
 
-function parseNewTaskForm(form) {
+function parseNewTaskForm(form, groupID)
+{
     let task = new Task;
 
     // Make sure the title is set
@@ -207,13 +216,16 @@ function parseNewTaskForm(form) {
         return;
     }
 
+    task.GroupID = groupID;
+
     // Read in fields
-    task.Desc = form.find("#desc");
-    task.Length = form.find("#length");
+    task.Desc = form.find("#description").val();
+    task.Length = form.find("#length").val();
+    task.Completed = 0;
 
     // Get the selected elements from the drop-downs
-    task.Assigned = form.find("#assigned").children(":selected").attr("id");
-    task.Frequency = form.find("#frequency").children(":selected").attr("id");
+    let assigned = form.find("#assigned").children(":selected").val();
+    task.Frequency = form.find("#frequency").children(":selected").val();
 
     // Get the time and date passed in the form
     // First get the date, then get the string representation of time (hh:mm)
@@ -222,5 +234,11 @@ function parseNewTaskForm(form) {
     let timevals = form.find("#time").val().split(":");
     task.Next += (parseInt(timevals[0]) * 60 + parseInt(timevals[1])) * 60;
 
-    $.post()
+    $.post("api/taskCreate.php", { Task : JSON.stringify(task), Assigned : JSON.stringify(assigned), Session : localStorage.getItem("Session") },
+        function (data){
+            if(data === "2002"){
+                Library.LogOut();
+                return;
+            }
+        });
 }

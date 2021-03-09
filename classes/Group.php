@@ -66,7 +66,7 @@ class GroupDB extends Database
 
     public function isMember(int $userID): bool
     {
-        $stmt1 = $this->prepare("SELECT ID FROM UserGroup WHERE GroupID = ? AND AccountID = ?");
+        $stmt1 = $this->prepare("SELECT ID FROM UserGroup WHERE GroupID = ? AND UserID = ?");
         $stmt1->bindValue(1, $this->groupID, SQLITE3_INTEGER);
         $stmt1->bindValue(2, $userID, SQLITE3_INTEGER);
 
@@ -84,7 +84,7 @@ class GroupDB extends Database
 
     public function getGroup(int $userID): Group|false
     {
-        $stmt = $this->prepare("SELECT 'Group'.* FROM 'Group', UserGroup WHERE UserGroup.GroupID = ? AND UserGroup.AccountID = ?");
+        $stmt = $this->prepare("SELECT 'Group'.* FROM 'Group', UserGroup WHERE UserGroup.GroupID = ? AND UserGroup.UserID = ?");
         $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
         $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
 
@@ -102,7 +102,7 @@ class GroupDB extends Database
 
     public function getMembers(): array|false
     {
-        $stmt = $this->prepare('SELECT ID, Name FROM User WHERE ID IN (SELECT AccountID FROM UserGroup WHERE GroupID = ?)');
+        $stmt = $this->prepare('SELECT ID, Name FROM User WHERE ID IN (SELECT UserID FROM UserGroup WHERE GroupID = ?)');
         $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
 
         return Group::fetch($stmt);
@@ -141,7 +141,7 @@ class GroupDB extends Database
 
     public function addMember(int $userID): bool
     {
-        $stmt = $this->prepare('INSERT INTO UserGroup (ID, AccountID, GroupID) VALUES (NULL, ?, ?)');
+        $stmt = $this->prepare('INSERT INTO UserGroup (ID, UserID, GroupID) VALUES (NULL, ?, ?)');
         $stmt->bindValue(1, $userID, SQLITE3_INTEGER);
         $stmt->bindValue(2, $this->groupID, SQLITE3_INTEGER);
 
@@ -180,7 +180,7 @@ class GroupDB extends Database
 
     public function removeMember(int $userID): bool
     {
-        $stmt = $this->prepare('DELETE FROM UserGroup WHERE GroupID = ? AND AccountID = ?');
+        $stmt = $this->prepare('DELETE FROM UserGroup WHERE GroupID = ? AND UserID = ?');
         $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
         $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
 

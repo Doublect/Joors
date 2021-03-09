@@ -11,9 +11,7 @@ class Task implements IDBConvert, JsonSerializable
     public string $Frequency;
     public int $Length;
     public bool $Completed;
-    public int $CreationTime;
     public int $Next;
-    public array $Assigned;
 
     public static function fromRow(array $row) : Task
     {
@@ -26,7 +24,6 @@ class Task implements IDBConvert, JsonSerializable
         $task->Frequency = $row['Frequency'] ?? '';
         $task->Length = $row['Length'] ?? -1;
         $task->Completed = $row['Completed'] ?? -1;
-        $task->CreationTime = $row['CreationTime'] ?? -1;
         $task->Next = $row['Next'] ?? -1;
 
         return $task;
@@ -67,6 +64,19 @@ class Task implements IDBConvert, JsonSerializable
     {
         return get_object_vars($this);
     }
+
+    public static function jsonDeserialize($json) : Task {
+        $class = json_decode($json);
+        $task = new Task();
+
+        foreach ($class AS $key => $value) {
+            if($value !== null) {
+                $task->{Input::test_input($key)} = Input::test_input($value);
+            }
+        }
+
+        return $task;
+    }
 }
 
 class TaskDB extends Database
@@ -84,7 +94,7 @@ class TaskDB extends Database
 
     public function getTask(int $taskID): Task|false
     {
-        $stmt = $this->prepare('SELECT Task.* FROM Task, UserGroup WHERE Task.ID = :taskID AND UserGroup.AccountID = :userID');
+        $stmt = $this->prepare('SELECT Task.* FROM Task, UserGroup WHERE Task.ID = :taskID AND UserGroup.UserID = :userID');
         $stmt->bindValue(':taskID', $taskID, SQLITE3_INTEGER);
         $stmt->bindValue(':userID', $this->userID, SQLITE3_INTEGER);
 
@@ -119,15 +129,14 @@ class TaskDB extends Database
 
     public function addTask(Task $task): bool
     {
-        $stmt = $this->prepare('INSERT INTO Task (ID, GroupID, Name, Desc, Frequency, Length, Completed, CreationTime, Next) VALUES (NULL, :groupID, :name, :desc, :freq, :length, :complete, :creation, :deadline, :next)');
+        $stmt = $this->prepare('INSERT INTO Task (ID, GroupID, Name, Desc, Frequency, Length, Completed, Next) VALUES (NULL, :groupID, :name, :desc, :freq, :length, :complete, :next)');
 
         $stmt->bindValue(':groupID', $task->GroupID, SQLITE3_INTEGER);
         $stmt->bindValue(':name', $task->Name, SQLITE3_TEXT);
         $stmt->bindValue(':desc', $task->Desc, SQLITE3_TEXT);
-        $stmt->bindValue(':freq', $task->Desc, SQLITE3_TEXT);
+        $stmt->bindValue(':freq', $task->Frequency, SQLITE3_TEXT);
         $stmt->bindValue(':length', $task->Completed, SQLITE3_INTEGER);
         $stmt->bindValue(':complete', $task->Completed, SQLITE3_INTEGER);
-        $stmt->bindValue(':creation', $task->CreationTime, SQLITE3_INTEGER);
         $stmt->bindValue(':deadline', $task->Next, SQLITE3_INTEGER);
 
         return $this->finish($stmt);
@@ -138,7 +147,7 @@ class TaskDB extends Database
 
     public function removeTask(int $taskID): bool
     {
-        $stmt = $this->prepare('DELETE FROM Task WHERE ID = ? and groupID IN (SELECT GroupID FROM UserGroup WHERE AccountID = ?)');
+        $stmt = $this->prepare('DELETE FROM Task WHERE ID = ? and groupID IN (SELECT GroupID FROM UserGroup WHERE UserID = ?)');
         $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
         $stmt->bindValue(2, $this->userID, SQLITE3_INTEGER);
 

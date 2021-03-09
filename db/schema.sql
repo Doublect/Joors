@@ -14,11 +14,11 @@ CREATE TABLE User (
 DROP TABLE UserGroup;
 CREATE TABLE UserGroup (
     ID INTEGER,
-    AccountID int,
+    UserID int,
     GroupID int,
     Load int,
     PRIMARY KEY (ID),
-    FOREIGN KEY (AccountID) REFERENCES User(ID) ON DELETE CASCADE,
+    FOREIGN KEY (UserID) REFERENCES User(ID) ON DELETE CASCADE,
     FOREIGN KEY (GroupID) REFERENCES "Group"(ID) ON DELETE CASCADE
 );
 

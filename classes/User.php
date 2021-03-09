@@ -131,7 +131,7 @@ class UserDB extends Database
 
     public function getUsersGroups(): array|false
     {
-        $stmt = $this->prepare("SELECT * FROM 'Group' WHERE ID in (SELECT GroupID FROM UserGroup WHERE AccountID = ?)");
+        $stmt = $this->prepare("SELECT * FROM 'Group' WHERE ID in (SELECT GroupID FROM UserGroup WHERE UserID = ?)");
         $stmt->bindValue(1, $this->userID, SQLITE3_INTEGER);
 
         return Group::fetch($stmt);

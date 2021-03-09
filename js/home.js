@@ -1,6 +1,7 @@
 import Group, * as G from "./classes/Group.js";
 import Page, {loadPage} from "./classes/Page.js";
 import GroupPage from "./classes/GroupPage.js";
+import * as Library from "./Library.js";
 
 let groups = {};
 export let users = {};
@@ -28,8 +29,7 @@ export function loadGroups() {
 
     $.post('api/groupsGet.php', { Session : localStorage.getItem("Session") }, function (data) {
         if(data === "2002") {
-            localStorage.clear()
-            window.location.href = "index.html";
+            Library.LogOut();
         } else {
             if(data !== "") {
                 data = JSON.parse(data);

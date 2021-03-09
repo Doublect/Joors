@@ -50,12 +50,12 @@ function loginForm() {
             return false;
         }
 
-        $.post("api/accountLogin.php", { Username : Username, Password : Password },
+        $.post("api/userLogin.php", { Username : Username, Password : Password },
             function (data) {
 
                 switch (data) {
                     case "2000":
-                        errors.append("No account");
+                        errors.append("No user");
                         break;
                     case "2001":
                         errors.append("Incorrect password");
@@ -105,7 +105,7 @@ function registerForm() {
 
         let user = new User(null, obj['email'], obj['rusername'], obj['rpassword'], null);
 
-        $.post("api/accountCreate.php", { User : JSON.stringify(user) },
+        $.post("api/userCreate.php", { User : JSON.stringify(user) },
             function (data) {
 
                 console.log(data);

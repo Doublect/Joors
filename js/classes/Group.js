@@ -1,5 +1,6 @@
 import User from "./User.js";
 import Task from "./Task.js";
+import * as Library from "../Library.js";
 
 export default class Group {
     constructor(ID, Name, OwnerID) {
@@ -37,8 +38,7 @@ function requestMembers(groupEntity) {
 export async function getChores(groupEntity) {
     await requestChores(groupEntity).then( function (data) {
         if(data === "2002"){
-            localStorage.clear();
-            window.location.href = "index.html";
+            Library.LogOut();
             return;
         }
 
@@ -55,8 +55,7 @@ export async function getChores(groupEntity) {
 export async function getMembers(groupEntity) {
     await requestMembers(groupEntity).then( function (data) {
         if(data === "2002"){
-            localStorage.clear();
-            window.location.href = "index.html";
+            Library.LogOut();
             return;
         }
 
