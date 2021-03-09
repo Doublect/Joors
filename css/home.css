@@ -1,28 +1,41 @@
-
-
 .box {
-    display: block;
-    justify-content: space-evenly;
+    display: flex;
+    flex-direction: column;
 
-    padding: 10px 30px 10px 30px;
-    margin: 20px 0 20px 0;
     width: auto;
     background: wheat;
 }
+
+.overlay-box {
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: center;
+
+    width: auto;
+    background: wheat;
+}
+
 
 .box-element {
     width: max-content;
     vertical-align: center;
 
-
     margin: 0 10px 0 10px;
+}
+
+.section {
+    padding: 5px 30px 5px 30px;
+    margin: 20px 10px 20px 10px;
+    background: wheat;
 }
 
 .task {
     margin: 10px 0 10px 0;
     padding-bottom: 6px;
     width: auto;
-    background: lightgray;
+    background: lightgrey;
 }
 
 .task-header {
@@ -49,4 +62,23 @@
 .description {
     max-width: 70%;
     min-width: 50%;
+}
+
+.overlay-content {
+    width: auto;
+    height: auto;
+
+    background: wheat;
+    opacity: 1;
+    z-index: 70;
+}
+
+.collapsible {
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+    background: wheat;
 }

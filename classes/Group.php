@@ -6,6 +6,7 @@ class Group implements IDBConvert
 {
     public int $ID;
     public string $Name;
+    public int $OwnerID;
 
     public static function fromRow(array $row) : Group
     {
@@ -13,6 +14,7 @@ class Group implements IDBConvert
 
         $group->ID = $row['ID'] ?? -1;
         $group->Name = $row['Name'] ?? "";
+        $group->OwnerID = $row['OwnerID'] ?? -1;
 
         return $group;
     }
@@ -71,6 +73,15 @@ class GroupDB extends Database
         return Group::fetchSingle($stmt);
     }
 
+    function getGroupByName(string $Name, int $ownerID) : Group|false
+    {
+        $stmt = $this->prepare("SELECT 'Group'.* FROM 'Group' WHERE Name = :name AND OwnerID = :userID");
+        $stmt->bindValue(":name", $Name, SQLITE3_TEXT);
+        $stmt->bindValue(":userID", $ownerID, SQLITE3_INTEGER);
+
+        return Group::fetchSingle($stmt);
+    }
+
     function getMembers() : array|false {
         $stmt = $this->prepare("SELECT User.ID, User.Name FROM User, UserGroup WHERE UserGroup.GroupID = :groupID");
         $stmt->bindValue(":groupID", $this->groupID, SQLITE3_INTEGER);
@@ -81,13 +92,16 @@ class GroupDB extends Database
     // ------------------------------------------------------------------------
     // ADD
 
-    function addGroup(Group $group) : bool
+    function addGroup(string $Name, int $userID) : bool
     {
-        $stmt = $this->prepare("INSERT INTO 'Group' VALUES (NULL, :name)");
+        $stmt = $this->prepare("INSERT INTO 'Group' (ID, Name, OwnerID) VALUES (NULL, :name, :userID)");
 
-        $stmt->bindValue(":name", $group->Name, SQLITE3_TEXT);
+        $stmt->bindValue(":name", $Name, SQLITE3_TEXT);
+        $stmt->bindValue(":userID", $userID, SQLITE3_INTEGER);
+        $this->finish($stmt);
 
-        return $this->finish($stmt);
+        $this->groupID = $this->getGroupByName($Name, $userID)->ID;
+        return  $this->addMember($userID);
     }
 
     function addMember(int $userID)
@@ -102,9 +116,19 @@ class GroupDB extends Database
     // ------------------------------------------------------------------------
     // REMOVE
 
-    function removeGroup() : bool
+    function removeGroup(int $userID) : bool
     {
-        $stmt = $this->prepare("DELETE FROM 'Group' WHERE ID = :groupID AND ID IN (SELECT GroupID FROM UserGroup WHERE AccountID = :userID)");
+        $stmt = $this->prepare("DELETE FROM 'Group' WHERE ID = :groupID AND OwnerID = :userID");
+        $stmt->bindValue(":groupID", $this->groupID, SQLITE3_INTEGER);
+        $stmt->bindValue(":userID", $userID, SQLITE3_INTEGER);
+
+        $this->finish($stmt);
+
+        $stmt = $this->prepare("DELETE FROM 'UserGroup' WHERE GroupID = :groupID");
+        $stmt->bindValue(":groupID", $this->groupID, SQLITE3_INTEGER);
+        $this->finish($stmt);
+
+        $stmt = $this->prepare("DELETE FROM 'Task' WHERE GroupID = :groupID");
         $stmt->bindValue(":groupID", $this->groupID, SQLITE3_INTEGER);
 
         return $this->finish($stmt);

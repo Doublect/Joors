@@ -70,17 +70,6 @@ function loginForm() {
                         window.location.href = "home.html";
                         break;
                 }
-
-                /*
-                if(data === "2000") {
-                    errors.append("No account");
-                } else {
-                    if (data === "2001") {
-                        errors.append("Incorrect password");
-                    } else {
-
-                    }
-                }*/
             });
     });
 }

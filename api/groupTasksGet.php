@@ -24,9 +24,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
             for($i = 0; $i < count($tasks); $i++){
                 $tasks[$i]->Assigned = $taskDB->getAssigned($tasks[$i]->ID);
             }
-            //echo $tasks[0];
 
             echo json_encode($tasks);
+        } else {
+            echo "3001";
         }
     }
 }

@@ -2,7 +2,7 @@ import * as G from "./Group.js";
 import User from "./User.js";
 import Task from "./Task.js";
 import Page from "./Page.js";
-import {users} from "../home.js";
+import {users, goHome, loadGroups} from "../home.js";
 
 export default class GroupPage extends Page {
     constructor(previous, current, GroupEntity) {
@@ -12,10 +12,19 @@ export default class GroupPage extends Page {
 
     onLoad() {
         let pageID = this.ID;
+        let membersreq;
+
+
+        createHeaderElement(this.group.Group, pageID);
+        bindCollapsible();
 
         if (this.group.Members.length === 0) {
-            G.getMembers(this.group).then(
+             membersreq = G.getMembers(this.group).then(
                 function (res) {
+                    if(res === "2002"){
+                        //TODO: logout if no session active
+                    }
+
                     for (let i = 0; i < res.length; i++) {
                         let user = Object.assign(new User, res[i]);
 
@@ -34,8 +43,12 @@ export default class GroupPage extends Page {
         }
 
         if (this.group.Chores.length === 0) {
-            G.getChores(this.group).then(
-                function (res) {
+            $.when(membersreq, G.getChores(this.group)).then(
+                function (memres, res) {
+                    if(res === "2002"){
+                        //TODO: logout if no session active
+                    }
+
                     for (let i = 0; i < res.length; i++) {
                         let task = Object.assign(new Task, res[i]);
 
@@ -52,10 +65,10 @@ export default class GroupPage extends Page {
     }
 }
 
-let tasksnippet =`
+let taskSnippet =`
 <div class="box-element task">
     <div id="header" class="task-header">
-        <p id="title" class="task-header-element"></p>
+        <h3 id="title" class="task-header-element"></h3>
         <p id="delete" class="task-header-element float-right">Delete</p>
         <p class="task-header-element float-right">Options</p>
     </div>
@@ -73,8 +86,37 @@ let tasksnippet =`
     </div>
 </div>`;
 
+export function createHeaderElement(group, pageID) {
+    const header = $("#content-" + pageID).children("#group-header");
+
+    // Show the name of the group
+    header.children("#group-title").text(group.Name);
+
+    let session = localStorage.getItem("Session")
+    let parsed = JSON.parse(session);
+
+    if(parsed.OwnerID === group.OwnerID) {
+        let deletebtn = $($.parseHTML("<button id='group-remove' class='inline-element float-right dgrey'>Delete</button>"));
+
+        deletebtn.on("click", function () {
+            if ($(this).hasClass("red")) {
+                $.post("api/groupDelete.php", { GroupID : group.ID, Session : session }, function (){
+                    loadGroups();
+                    goHome();
+                });
+            } else {
+                $(this).removeClass("dgrey");
+                $(this).addClass("red");
+                $(this).text("Are you sure?");
+            }
+        });
+
+        header.append(deletebtn);
+    }
+}
+
 export function createUserElement(user, pageID) {
-    const membersdiv = $("#content-" + pageID).children("#members");
+    const membersdiv = $("#content-" + pageID).find("#members");
 
     let p = $("<p></p>").text(user.Name);
     p.addClass("box-element");
@@ -83,15 +125,15 @@ export function createUserElement(user, pageID) {
 }
 
 export function createTaskElement(task, pageID) {
-    const tasksdiv = $("#content-" + pageID).children("#tasks");
+    const tasksdiv = $("#content-" + pageID).find("#tasks");
 
-    let taskelem = $($.parseHTML(tasksnippet));
+    let taskElem = $($.parseHTML(taskSnippet));
 
-    taskelem.find("#title").text(task.Name);
-    taskelem.find("#description").text(task.Desc);
+    taskElem.find("#title").text(task.Name);
+    taskElem.find("#description").text(task.Desc);
     //taskelem.find($("#delete")).on("click")
 
-    let assignelem = taskelem.find("#assigned");
+    let assignelem = taskElem.find("#assigned");
 
     for(let i = 0; i < task.Assigned.length; i++) {
         let p = $("<p></p>").text(users[task.Assigned[i]].Name);
@@ -100,5 +142,21 @@ export function createTaskElement(task, pageID) {
         assignelem.append(p);
     }
 
-    tasksdiv.append(taskelem);
+    tasksdiv.append(taskElem);
+}
+
+function bindCollapsible() {
+    let collapsibles = $(".collapsible");
+
+    collapsibles.each( function () {
+       $(this).on("click", function () {
+           $(this).toggleClass("active");
+           let content = $(this).next();
+           if(content.is(":visible")){
+               content.hide();
+           } else {
+               content.show();
+           }
+       })
+    });
 }

@@ -4,10 +4,28 @@ import GroupPage from "./classes/GroupPage.js";
 
 let groups = {};
 export let users = {};
-let currentpage;
+let currentPage, homePage;
 
 $(function () {
     // Load groups
+    loadGroups();
+
+    addControlBindings();
+});
+
+function addControlBindings() {
+    $("#previousbtn").on("click", function () {
+        currentPage = currentPage.previous();
+    });
+
+    $("#homebtn").on("click", function () {
+        goHome();
+    });
+}
+
+export function loadGroups() {
+    $("#sidebar").empty();
+
     $.post('api/groupsGet.php', { Session : localStorage.getItem("Session") }, function (data) {
         switch(data) {
             case "2002":
@@ -16,32 +34,58 @@ $(function () {
             default:
                 data = JSON.parse(data);
 
-                for(let i = data.length; i >= 0; i--) {
+                for(let i = 0; i < data.length; i++) {
                     let group = Object.assign(new Group, data[i]);
                     groups[group.ID] = new G.GroupEntity(group);
 
                     createGroupElement(group);
                 }
 
-                currentpage = new Page(undefined, 'homepage.html');
+                groupCreate();
+
+                if(currentPage === undefined) {
+                    currentPage = new Page(undefined, 'homepage.html');
+                    homePage = currentPage;
+                }
                 break;
         }
     });
+}
 
-    addControlBindings();
-});
+function groupCreate() {
+    const sidebar = $("#sidebar");
 
-function addControlBindings() {
-    $("#previousbtn").on("click", function () {
-        currentpage = currentpage.previous();
-    });
+    let createbutton = $("#groupbtn");
+    let createform = $("#groupform")
 
-    $("#homebtn").on("click", function () {
-        while(currentpage.ID > 0) {
-            currentpage = currentpage.remove();
-        }
-        currentpage.show();
-    });
+    if(createbutton.length === 0) {
+        createform.remove();
+
+        let p = $($.parseHTML("<p id='groupbtn' class='sbar-element'>Create new group</p>"));
+
+        p.on("click", function (){
+            groupCreate();
+        });
+
+        sidebar.append(p);
+    } else {
+        createbutton.remove();
+
+        let p = $($.parseHTML("<form id='groupform' class='sbar-element'> <input id='groupname'> <input type='submit' value='Create'></form>"));
+
+        p.on("submit", function (){
+            let name = $("#groupform").find("#groupname").val();
+
+            $.post('api/groupCreate.php', { Name : name, Session : localStorage.getItem("Session") }, function () {
+                loadGroups();
+            })
+
+            groupCreate();
+        });
+
+        sidebar.append(p);
+    }
+
 }
 
 function createGroupElement(group) {
@@ -55,9 +99,17 @@ function createGroupElement(group) {
         loadGroupPage(group.ID);
     });
 
-    sidebar.prepend(p);
+    sidebar.append(p);
 }
 
 function loadGroupPage(groupID) {
-    currentpage = new GroupPage(currentpage, 'grouppage.html', groups[groupID]);
+    currentPage.previous();
+    currentPage = new GroupPage(homePage, 'grouppage.html', groups[groupID]);
+}
+
+export function goHome() {
+    while(currentPage.ID > 0) {
+        currentPage = currentPage.remove();
+    }
+    currentPage.show();
 }

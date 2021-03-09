@@ -25,6 +25,7 @@ DROP TABLE "Group";
 CREATE TABLE "Group" (
     ID INTEGER,
     Name varchar(256),
+    OwnerID int,
     PRIMARY KEY (ID)
 );
 

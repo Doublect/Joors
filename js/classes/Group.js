@@ -1,9 +1,10 @@
 import User from "./User.js";
 
 export default class Group {
-    constructor(ID, Name) {
+    constructor(ID, Name, OwnerID) {
         this.ID = ID;
         this.Name = Name;
+        this.OwnerID = OwnerID;
     }
 }
 
