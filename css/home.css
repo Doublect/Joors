@@ -56,7 +56,7 @@
     padding: 3px 6px;
     height: fit-content;
     width: auto;
-    margin: 2px;
+    margin: 3px;
 }
 
 .description {
@@ -71,14 +71,4 @@
     background: wheat;
     opacity: 1;
     z-index: 70;
-}
-
-.collapsible {
-    cursor: pointer;
-    padding: 18px;
-    width: 100%;
-    text-align: left;
-    outline: none;
-    font-size: 15px;
-    background: wheat;
 }

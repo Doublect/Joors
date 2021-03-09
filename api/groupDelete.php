@@ -11,7 +11,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
             exit();
         }
 
-        // Create groupDB for group
+        // Create groupDB for groupEntity
         require_once '../classes/Group.php';
         $groupID = intval(Input::test_input($_POST['GroupID']));
         $groupDB = new GroupDB($groupID);

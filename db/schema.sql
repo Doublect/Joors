@@ -16,6 +16,7 @@ CREATE TABLE UserGroup (
     ID INTEGER,
     AccountID int,
     GroupID int,
+    Load int,
     PRIMARY KEY (ID),
     FOREIGN KEY (AccountID) REFERENCES User(ID) ON DELETE CASCADE,
     FOREIGN KEY (GroupID) REFERENCES "Group"(ID) ON DELETE CASCADE
@@ -33,12 +34,13 @@ DROP TABLE Task;
 CREATE TABLE Task (
     ID INTEGER,
     GroupID int,
-    Name varchar(256),
-    Colour varchar(64),
+    Name varchar(128),
     Desc varchar(1024),
+    Frequency varchar(32),
+    Length int,
     Completed bool,
     CreationTime DATETIME,
-    Deadline DATETIME,
+    Next DATETIME,
     PRIMARY KEY (ID),
     FOREIGN KEY (GroupID) REFERENCES "Group"(ID) ON DELETE CASCADE
 );
@@ -46,7 +48,7 @@ CREATE TABLE Task (
 DROP TABLE Assigned;
 CREATE TABLE Assigned
 (
-    ID      INTEGER,
+    ID INTEGER,
     TaskID int,
     UserID  int,
     PRIMARY KEY (ID),

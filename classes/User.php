@@ -17,8 +17,8 @@ class User implements IDBConvert, JsonSerializable
         $user = new User();
 
         $user->ID = $row['ID'] ?? -1;
-        $user->Name = $row['Name'] ?? "";
-        $user->Password = $row['Password'] ?? "";
+        $user->Name = $row['Name'] ?? '';
+        $user->Password = $row['Password'] ?? '';
         $user->CreationTime = $row['CreationTime'] ?? -1;
 
         return $user;
@@ -58,13 +58,14 @@ class User implements IDBConvert, JsonSerializable
         return get_object_vars($this);
     }
 
-    public function jsonDeserialize($json) : User {
+    public static function jsonDeserialize($json) : User {
         $class = json_decode($json);
         $user = new User();
 
         foreach ($class AS $key => $value) {
-            if($value != null)
+            if($value !== null) {
                 $user->{Input::test_input($key)} = Input::test_input($value);
+            }
         }
 
         return $user;
@@ -75,7 +76,7 @@ class UserDB extends Database
 {
     private int $userID;
 
-    function __construct($userid)
+    public function __construct($userid)
     {
         $this->userID = $userid;
         parent::__construct();
@@ -84,24 +85,27 @@ class UserDB extends Database
     // ------------------------------------------------------------------------
     // CHECKS
 
-    function usernameExists(string $username) : bool {
-        $stmt = $this->prepare("SELECT Name FROM User WHERE Name = :uname");
-        $stmt->bindValue(":uname", $username, SQLITE3_TEXT);
+    public function usernameExists(string $username): bool
+    {
+        $stmt = $this->prepare('SELECT Name FROM User WHERE Name = ?');
+        $stmt->bindValue(1, $username, SQLITE3_TEXT);
 
         return $this->exists($stmt);
     }
 
-    function emailExists(string $email) : bool {
-        $stmt = $this->prepare("SELECT Name FROM User WHERE Email = :email");
-        $stmt->bindValue(":email", $email, SQLITE3_TEXT);
+    public function emailExists(string $email): bool
+    {
+        $stmt = $this->prepare('SELECT Name FROM User WHERE Email = :email');
+        $stmt->bindValue(':email', $email, SQLITE3_TEXT);
 
         return $this->exists($stmt);
     }
 
-    function uniqueCheck(User $acc) : bool {
-        $stmt = $this->prepare("SELECT Name FROM User WHERE Email = :email OR Name = :uname");
-        $stmt->bindValue(":email", $acc->Email, SQLITE3_TEXT);
-        $stmt->bindValue(":uname", $acc->Name, SQLITE3_TEXT);
+    public function uniqueCheck(User $acc): bool
+    {
+        $stmt = $this->prepare('SELECT Name FROM User WHERE Email = :email OR Name = :uname');
+        $stmt->bindValue(':email', $acc->Email, SQLITE3_TEXT);
+        $stmt->bindValue(':uname', $acc->Name, SQLITE3_TEXT);
 
         return $this->exists($stmt);
     }
@@ -109,40 +113,53 @@ class UserDB extends Database
     // ------------------------------------------------------------------------
     // GET
 
-    function getUser() : User|false
+    public function getUser(): User|false
     {
-        $stmt = $this->prepare("SELECT * FROM User WHERE ID = :userID");
-        $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
+        $stmt = $this->prepare('SELECT * FROM User WHERE ID = :userID');
+        $stmt->bindValue(':userID', $this->userID, SQLITE3_INTEGER);
 
         return User::fetchSingle($stmt);
     }
 
-    function getUserByName(string $username) : User|false
+    public function getUserByName(string $username): User|false
     {
-        $stmt = $this->prepare("SELECT * FROM User WHERE Name = :uname");
-        $stmt->bindValue(":uname", $username, SQLITE3_TEXT);
+        $stmt = $this->prepare('SELECT * FROM User WHERE Name = :uname');
+        $stmt->bindValue(':uname', $username, SQLITE3_TEXT);
 
         return User::fetchSingle($stmt);
     }
 
-    function getUsersGroups() : array|false
+    public function getUsersGroups(): array|false
     {
-        $stmt = $this->prepare("SELECT * FROM 'Group' WHERE ID in (SELECT GroupID FROM UserGroup WHERE UserGroup.AccountID = :userID)");
-        $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
+        $stmt = $this->prepare("SELECT * FROM 'Group' WHERE ID in (SELECT GroupID FROM UserGroup WHERE AccountID = ?)");
+        $stmt->bindValue(1, $this->userID, SQLITE3_INTEGER);
 
         return Group::fetch($stmt);
+    }
+
+    public function getInvitations(): array|false
+    {
+        $stmt = $this->prepare("SELECT * FROM 'Group' WHERE ID in (SELECT GroupID FROM Invitation WHERE UserID = ?)");
+        $stmt->bindValue(1, $this->userID, SQLITE3_INTEGER);
+
+        return Group::fetch($stmt);
+    }
+
+    public function getTasks(): array|false
+    {
+        $stmt = $this->prepare("SELECT * FROM Task WHERE GroupID in (SELECT GroupID FROM UserGroup WHERE UserID = ?)");
     }
 
     // ------------------------------------------------------------------------
     // ADD
 
-    function addUser(User $acc) : bool
+    public function addUser(User $acc): bool
     {
-        $stmt = $this->prepare("INSERT INTO User(ID, Email, Name, Password, CreationTime) VALUES (NULL, :email, :uname, :passw, :creation)");
-        $stmt->bindValue(":email", $acc->Email, SQLITE3_TEXT);
-        $stmt->bindValue(":uname", $acc->Name, SQLITE3_TEXT);
-        $stmt->bindValue(":passw", $acc->Password, SQLITE3_TEXT);
-        $stmt->bindValue(":creation", $acc->CreationTime, SQLITE3_INTEGER);
+        $stmt = $this->prepare('INSERT INTO User(ID, Email, Name, Password, CreationTime) VALUES (NULL, :email, :uname, :passw, :creation)');
+        $stmt->bindValue(':email', $acc->Email, SQLITE3_TEXT);
+        $stmt->bindValue(':uname', $acc->Name, SQLITE3_TEXT);
+        $stmt->bindValue(':passw', $acc->Password, SQLITE3_TEXT);
+        $stmt->bindValue(':creation', $acc->CreationTime, SQLITE3_INTEGER);
 
         return $this->finish($stmt);
     }
@@ -150,10 +167,10 @@ class UserDB extends Database
     // ------------------------------------------------------------------------
     // REMOVE
 
-    function removeUser() : bool
+    public function removeUser(): bool
     {
-        $stmt = $this->prepare("DELETE FROM User WHERE ID = :userID");
-        $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
+        $stmt = $this->prepare('DELETE FROM User WHERE ID = :userID');
+        $stmt->bindValue(':userID', $this->userID, SQLITE3_INTEGER);
 
         return $this->finish($stmt);
     }

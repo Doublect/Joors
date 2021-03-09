@@ -1,14 +1,14 @@
 <?php
 
-if($_SERVER["REQUEST_METHOD"] == "POST") {
+if($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     error_reporting(E_ALL);
-    ini_set("display_errors",1);
+    ini_set('display_errors',1);
 
     // Check if variables are set
     if(isset($_POST['Username']) && isset($_POST['Password'])){
-        require_once "../classes/User.php";
-        require_once "../classes/Input.php";
+        require_once '../classes/User.php';
+        require_once '../classes/Input.php';
 
         // Clean inputs
         $uname = Input::test_input($_POST['Username']);
@@ -21,22 +21,22 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         if(($user = $accdb->getUserByName($uname)) !== false) {
             // Check if password is correct
             if(password_verify($pass . $user->CreationTime, $user->Password)){
-                require_once "../auth/Session.php";
+                require_once '../auth/Session.php';
                 $sessDB = new SessionDB();
 
                 // Don't send password data, create new session for user
-                $user->Password = "";
+                unset($user->Password);
                 $sess = $sessDB->createSession($user->ID);
 
                 // Return user and session data to client
-                $data["User"] = $user;
-                $data["Session"] = $sess;
+                $data['User'] = $user;
+                $data['Session'] = $sess;
                 echo json_encode($data);
             } else {
-                echo "2001";
+                echo '2001';
             }
         } else {
-            echo "2000";
+            echo '2000';
         }
     }
 }

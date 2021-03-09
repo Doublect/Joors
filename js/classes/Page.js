@@ -15,8 +15,6 @@ export default class Page {
         }
 
         this.Link = current;
-
-        loadPage(this);
     }
 
 
@@ -29,7 +27,7 @@ export default class Page {
             this.PreviousPage.show();
             return this.PreviousPage;
         } else return this;
-    };
+    }
 
     remove() {
         if(this.PreviousPage) {
@@ -56,7 +54,7 @@ export function loadPage(page) {
 
     div.load(page.Link, function () {
         page.onLoad();
-    })
+    });
 
     page.Head = $("#content-" + page.ID);
 }

@@ -1,5 +1,4 @@
 import User from "./classes/User.js";
-import Session from "./classes/Session.js";
 
 $(function () {
 
@@ -9,7 +8,7 @@ $(function () {
 
     $('#loginlink').on("click", function() {
         hideOverlay();
-    })
+    });
 
     $('#registerlink').on("click", function() {
         showOverlay();
@@ -34,7 +33,7 @@ function loginForm() {
 
         let array = $("#loginform").serializeArray();
         let obj = {};
-        let errors = $("#lerrors")
+        let errors = $("#lerrors");
 
         // Make sure errors is empty
         errors.empty();
@@ -89,12 +88,12 @@ function registerForm() {
             obj[array[i].name] = array[i].value;
         }
 
-        if(obj['password'] !== obj['password_check']) {
+        if(obj['rpassword'] !== obj['rpassword_check']) {
             errors.append("Passwords don't match!");
             return false;
         }
 
-        if(obj['password'].length < 6) {
+        if(obj['rpassword'].length < 6) {
             errors.append("Please use a password longer than 5 characters!");
             return false;
         }
@@ -104,7 +103,7 @@ function registerForm() {
             return false;
         }
 
-        let user = new User(null, obj['email'], obj['username'], obj['password'], null);
+        let user = new User(null, obj['email'], obj['rusername'], obj['rpassword'], null);
 
         $.post("api/accountCreate.php", { User : JSON.stringify(user) },
             function (data) {
@@ -119,7 +118,7 @@ function registerForm() {
                         errors.append("Invalid email format.");
                         break;
                     case "2005":
-                        errors.append("Email already taken.")
+                        errors.append("Email already taken.");
                         break;
                     default:
                         data = JSON.parse(data);

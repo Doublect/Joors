@@ -5,50 +5,62 @@ import Page from "./Page.js";
 import {users, goHome, loadGroups} from "../home.js";
 
 export default class GroupPage extends Page {
+    groupEntity;
+
     constructor(previous, current, GroupEntity) {
         super(previous, current);
-        this.group = GroupEntity;
+        this.groupEntity = GroupEntity;
     }
 
     onLoad() {
         let pageID = this.ID;
+        let groupEntity = this.groupEntity;
         let membersreq;
+        let newtaskassign = $("#assigned");
 
+        createHeaderElement(this.groupEntity.Group, pageID);
 
-        createHeaderElement(this.group.Group, pageID);
-        bindCollapsible();
-
-        if (this.group.Members.length === 0) {
-             membersreq = G.getMembers(this.group).then(
+        if (this.groupEntity.Members.length === 0) {
+             membersreq = G.getMembers(this.groupEntity).then(
                 function (res) {
-                    if(res === "2002"){
-                        //TODO: logout if no session active
+                    for (let i = 0; i < res.length; i++) {
+                        if(!users[res[i].ID])
+                            users[res[i].ID] = res[i];
+
+                        createUserElement(res[i], pageID);
+                        addUserNewTaskOption(res[i], newtaskassign);
                     }
 
-                    for (let i = 0; i < res.length; i++) {
-                        let user = Object.assign(new User, res[i]);
+                    let invited = groupEntity.Invited;
+                    for (let i = 0; i < invited.length; i++) {
 
-                        if(!users[user.ID])
-                            users[user.ID] = user;
+                        if(!users[invited[i].ID])
+                            users[invited[i].ID] = invited[i];
 
-                        createUserElement(user, pageID);
+                        createUserElement(invited[i], pageID);
                     }
                 }, function () {
                     alert("Couldn't load members list!");
                 });
         } else {
-            for (let i = 0; i < this.group.Members.length; i++) {
-                createUserElement(this.group.Members[i], this.ID);
+            for (let i = 0; i < this.groupEntity.Members.length; i++) {
+                createUserElement(this.groupEntity.Members[i], this.ID);
+                addUserNewTaskOption(this.groupEntity.Members[i], newtaskassign);
             }
         }
 
-        if (this.group.Chores.length === 0) {
-            $.when(membersreq, G.getChores(this.group)).then(
-                function (memres, res) {
-                    if(res === "2002"){
-                        //TODO: logout if no session active
-                    }
+        $("#addbtn").on("click", function (event) {
+            event.preventDefault();
+            groupMemberChange($("#username")[0].value, groupEntity, "Add", pageID);
+        });
+        $("#removebtn").on("click", function (event) {
+            event.preventDefault();
+            groupMemberChange($("#username")[0].value, groupEntity, "Remove", pageID);
+        });
 
+        if (this.groupEntity.Chores.length === 0) {
+            $.when(membersreq, G.getChores(this.groupEntity)).then(
+                function (memres, res) {
                     for (let i = 0; i < res.length; i++) {
                         let task = Object.assign(new Task, res[i]);
 
@@ -58,8 +70,8 @@ export default class GroupPage extends Page {
                     alert("Couldn't load task list!");
                 });
         } else {
-            for (let i = 0; i < this.group.Chores.length; i++) {
-                createTaskElement(this.group.Chores[i], this.ID);
+            for (let i = 0; i < this.groupEntity.Chores.length; i++) {
+                createTaskElement(this.groupEntity.Chores[i], this.ID);
             }
         }
     }
@@ -87,12 +99,12 @@ let taskSnippet =`
 </div>`;
 
 export function createHeaderElement(group, pageID) {
-    const header = $("#content-" + pageID).children("#group-header");
+    const header = $("#content-" + pageID).find("#group-header");
 
-    // Show the name of the group
-    header.children("#group-title").text(group.Name);
+    // Show the name of the groupEntity
+    header.find("#group-title").text(group.Name);
 
-    let session = localStorage.getItem("Session")
+    let session = localStorage.getItem("Session");
     let parsed = JSON.parse(session);
 
     if(parsed.OwnerID === group.OwnerID) {
@@ -115,13 +127,26 @@ export function createHeaderElement(group, pageID) {
     }
 }
 
-export function createUserElement(user, pageID) {
+function createUserElement(user, pageID) {
     const membersdiv = $("#content-" + pageID).find("#members");
 
     let p = $("<p></p>").text(user.Name);
     p.addClass("box-element");
 
     membersdiv.append(p);
+}
+
+function deleteUserElement(user, pageID) {
+    $("#content-" + pageID).find("#members").children().remove("p:contains(" + user.Name + ")");
+}
+
+function addUserNewTaskOption(user, elem) {
+    let option = $("<option></option>");
+
+    option.attr("id", user.ID);
+    option.text(user.Name);
+
+    elem.append(option);
 }
 
 export function createTaskElement(task, pageID) {
@@ -145,18 +170,57 @@ export function createTaskElement(task, pageID) {
     tasksdiv.append(taskElem);
 }
 
-function bindCollapsible() {
-    let collapsibles = $(".collapsible");
+function groupMemberChange(Username, groupEntity, action, pageID) {
+    $.post("api/groupMembership.php", { Action : action, Username : Username, GroupID : groupEntity.Group.ID, Session : localStorage.getItem("Session")},
+        function (data) {
+            if(data === "") {
+                return;
+            }
 
-    collapsibles.each( function () {
-       $(this).on("click", function () {
-           $(this).toggleClass("active");
-           let content = $(this).next();
-           if(content.is(":visible")){
-               content.hide();
-           } else {
-               content.show();
-           }
-       })
-    });
+            if(data === "2002") {
+                localStorage.clear();
+                window.location.href = "index.html";
+                return;
+            }
+
+            let user = JSON.parse(data);
+
+            if(user.Name) {
+                users[user.ID] = user;
+
+                if (action === "Add") {
+                    groupEntity.Members.push(user.ID);
+                    createUserElement(user, pageID);
+                } else if (action === "Remove") {
+                    deleteUserElement(user, pageID);
+                }
+            }
+        });
+}
+
+function parseNewTaskForm(form) {
+    let task = new Task;
+
+    // Make sure the title is set
+    task.Name = form.find("#title").val();
+    if(task.Name === "") {
+        return;
+    }
+
+    // Read in fields
+    task.Desc = form.find("#desc");
+    task.Length = form.find("#length");
+
+    // Get the selected elements from the drop-downs
+    task.Assigned = form.find("#assigned").children(":selected").attr("id");
+    task.Frequency = form.find("#frequency").children(":selected").attr("id");
+
+    // Get the time and date passed in the form
+    // First get the date, then get the string representation of time (hh:mm)
+    // Finally convert the time to seconds
+    task.Next = Math.round(new Date(form.find("#date").val()).getTime() / 1000);
+    let timevals = form.find("#time").val().split(":");
+    task.Next += (parseInt(timevals[0]) * 60 + parseInt(timevals[1])) * 60;
+
+    $.post()
 }

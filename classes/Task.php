@@ -7,11 +7,12 @@ class Task implements IDBConvert, JsonSerializable
     public int $ID;
     public int $GroupID;
     public string $Name;
-    public string $Colour;
     public string $Desc;
+    public string $Frequency;
+    public int $Length;
     public bool $Completed;
     public int $CreationTime;
-    public int $Deadline;
+    public int $Next;
     public array $Assigned;
 
     public static function fromRow(array $row) : Task
@@ -20,12 +21,13 @@ class Task implements IDBConvert, JsonSerializable
 
         $task->ID = $row['ID'] ?? -1;
         $task->GroupID = $row['GroupID'] ?? -1;
-        $task->Name = $row['Name'] ?? "";
-        $task->Colour = $row['Colour'] ?? "";
-        $task->Desc = $row['Desc'] ?? "";
+        $task->Name = $row['Name'] ?? '';
+        $task->Desc = $row['Desc'] ?? '';
+        $task->Frequency = $row['Frequency'] ?? '';
+        $task->Length = $row['Length'] ?? -1;
         $task->Completed = $row['Completed'] ?? -1;
         $task->CreationTime = $row['CreationTime'] ?? -1;
-        $task->Deadline = $row['Deadline'] ?? -1;
+        $task->Next = $row['Next'] ?? -1;
 
         return $task;
     }
@@ -71,7 +73,7 @@ class TaskDB extends Database
 {
     private int $userID;
 
-    function __construct($userid)
+    public function __construct($userid)
     {
         $this->userID = $userid;
         parent::__construct();
@@ -80,34 +82,34 @@ class TaskDB extends Database
     // ------------------------------------------------------------------------
     // GET
 
-    function getTask(int $taskID) : Task|false
+    public function getTask(int $taskID): Task|false
     {
-        $stmt = $this->prepare("SELECT Task.* FROM Task, UserGroup WHERE Task.ID = :taskID AND UserGroup.AccountID = :userID");
-        $stmt->bindValue(":taskID", $taskID, SQLITE3_INTEGER);
-        $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
+        $stmt = $this->prepare('SELECT Task.* FROM Task, UserGroup WHERE Task.ID = :taskID AND UserGroup.AccountID = :userID');
+        $stmt->bindValue(':taskID', $taskID, SQLITE3_INTEGER);
+        $stmt->bindValue(':userID', $this->userID, SQLITE3_INTEGER);
 
         return Task::fetchSingle($stmt);
     }
 
-    function getGroupsTasks(int $groupID) : array|false
+    public function getGroupsTasks(int $groupID): array|false
     {
-        $stmt = $this->prepare("SELECT Task.* FROM Task WHERE Task.GroupID = :groupID");
-        $stmt->bindValue(":groupID", $groupID, SQLITE3_INTEGER);
-        $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
+        $stmt = $this->prepare('SELECT Task.* FROM Task WHERE Task.GroupID = :groupID');
+        $stmt->bindValue(':groupID', $groupID, SQLITE3_INTEGER);
+        $stmt->bindValue(':userID', $this->userID, SQLITE3_INTEGER);
 
         return Task::fetch($stmt);
     }
 
-    function getAssigned(int $taskID) : array|false
+    public function getAssigned(int $taskID): array|false
     {
-        $stmt = $this->prepare("SELECT Assigned.UserID FROM Assigned WHERE Assigned.TaskID = :taskID");
-        $stmt->bindValue(":taskID", $taskID, SQLITE3_INTEGER);
+        $stmt = $this->prepare('SELECT Assigned.UserID FROM Assigned WHERE Assigned.TaskID = :taskID');
+        $stmt->bindValue(':taskID', $taskID, SQLITE3_INTEGER);
 
         $res = $stmt->execute();
         $users = array();
 
-        for($i = 0; ($row = $res->fetchArray()); $i++) {
-            $users[$i] = $row["UserID"];
+        for ($i = 0; ($row = $res->fetchArray()); $i++) {
+            $users[$i] = $row['UserID'];
         }
         return $users;
     }
@@ -115,17 +117,18 @@ class TaskDB extends Database
     // ------------------------------------------------------------------------
     // ADD
 
-    function addTask(Task $task) : bool
+    public function addTask(Task $task): bool
     {
-        $stmt = $this->prepare("INSERT INTO Task (ID, GroupID, Name, Colour, Desc, Completed, CreationTime, Deadline) VALUES (NULL, :groupID, :name, :colour, :desc, :complete, :creation, :deadline)");
+        $stmt = $this->prepare('INSERT INTO Task (ID, GroupID, Name, Desc, Frequency, Length, Completed, CreationTime, Next) VALUES (NULL, :groupID, :name, :desc, :freq, :length, :complete, :creation, :deadline, :next)');
 
-        $stmt->bindValue(":groupID", $task->GroupID, SQLITE3_INTEGER);
-        $stmt->bindValue(":name", $task->Name, SQLITE3_TEXT);
-        $stmt->bindValue(":colour", $task->Colour, SQLITE3_TEXT);
-        $stmt->bindValue(":desc", $task->Desc, SQLITE3_TEXT);
-        $stmt->bindValue(":complete", $task->Completed, SQLITE3_INTEGER);
-        $stmt->bindValue(":creation", $task->CreationTime, SQLITE3_INTEGER);
-        $stmt->bindValue(":deadline", $task->Deadline, SQLITE3_INTEGER);
+        $stmt->bindValue(':groupID', $task->GroupID, SQLITE3_INTEGER);
+        $stmt->bindValue(':name', $task->Name, SQLITE3_TEXT);
+        $stmt->bindValue(':desc', $task->Desc, SQLITE3_TEXT);
+        $stmt->bindValue(':freq', $task->Desc, SQLITE3_TEXT);
+        $stmt->bindValue(':length', $task->Completed, SQLITE3_INTEGER);
+        $stmt->bindValue(':complete', $task->Completed, SQLITE3_INTEGER);
+        $stmt->bindValue(':creation', $task->CreationTime, SQLITE3_INTEGER);
+        $stmt->bindValue(':deadline', $task->Next, SQLITE3_INTEGER);
 
         return $this->finish($stmt);
     }
@@ -133,11 +136,11 @@ class TaskDB extends Database
     // ------------------------------------------------------------------------
     // REMOVE
 
-    function removeTask(int $taskID) : bool
+    public function removeTask(int $taskID): bool
     {
-        $stmt = $this->prepare("DELETE FROM Task WHERE ID = :taskID and groupID IN (SELECT GroupID FROM UserGroup WHERE AccountID = :userID)");
-        $stmt->bindValue(":taskID", $taskID, SQLITE3_INTEGER);
-        $stmt->bindValue(":userID", $this->userID, SQLITE3_INTEGER);
+        $stmt = $this->prepare('DELETE FROM Task WHERE ID = ? and groupID IN (SELECT GroupID FROM UserGroup WHERE AccountID = ?)');
+        $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
+        $stmt->bindValue(2, $this->userID, SQLITE3_INTEGER);
 
         return $this->finish($stmt);
     }
