@@ -31,7 +31,7 @@ class Task implements IDBConvert, JsonSerializable
 
     public static function fetchSingle(SQLite3Stmt $stmt) : Task|false
     {
-        if(($row = $stmt->execute()->fetchArray()) == false) {
+        if(!($row = $stmt->execute()->fetchArray())) {
             $return = false;
         } else {
             $return = Task::fromRow($row);
@@ -45,7 +45,7 @@ class Task implements IDBConvert, JsonSerializable
     {
         $res = $stmt->execute();
 
-        if(($row = $res->fetchArray()) == false) {
+        if(!($row = $res->fetchArray())) {
             $return = false;
         } else {
             $return = array();
@@ -137,7 +137,7 @@ class TaskDB extends Database
         $stmt->bindValue(':freq', $task->Frequency, SQLITE3_TEXT);
         $stmt->bindValue(':length', $task->Completed, SQLITE3_INTEGER);
         $stmt->bindValue(':complete', $task->Completed, SQLITE3_INTEGER);
-        $stmt->bindValue(':deadline', $task->Next, SQLITE3_INTEGER);
+        $stmt->bindValue(':next', $task->Next, SQLITE3_INTEGER);
 
         return $this->finish($stmt);
     }

@@ -11,7 +11,7 @@ export default class Group {
 }
 
 export class GroupEntity {
-    Chores = [];
+    Chores = {};
     Members = [];
     Invited = [];
     Group;
@@ -45,7 +45,7 @@ export async function getChores(groupEntity) {
         let parsed = JSON.parse(data);
 
         for (let i = 0; i < parsed.length; i++) {
-            groupEntity.Chores.push(Object.assign(new Task, parsed[i]));
+            groupEntity.Chores[parsed[i].ID] = Object.assign(new Task, parsed[i]);
         }
     });
 

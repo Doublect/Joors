@@ -1,3 +1,7 @@
+h2 {
+    margin-bottom: 0.2em;
+}
+
 .box {
     display: flex;
     flex-direction: column;
@@ -6,6 +10,13 @@
     background: wheat;
 }
 
+.rowbox {
+    display: flex;
+    flex-direction: row;
+
+    width: auto;
+    background: wheat;
+}
 .overlay-box {
     display: flex;
     flex-direction: column;
@@ -21,8 +32,14 @@
 .box-element {
     width: max-content;
     vertical-align: center;
+    justify-items: center;
 
     margin: 0 10px 0 10px;
+}
+
+.inline-block {
+    display: inline-block;
+    width: 100%;
 }
 
 .section {
@@ -54,7 +71,7 @@
 .inline-element {
     display: inline-block;
     padding: 3px 6px;
-    height: fit-content;
+    height: auto;
     width: auto;
     margin: 3px;
 }
@@ -71,4 +88,10 @@
     background: wheat;
     opacity: 1;
     z-index: 70;
+}
+
+.button {
+    padding-top: 0;
+    margin-top: -3px;
+    margin-right: -2px;
 }

@@ -28,21 +28,16 @@ class Database
 
     public function exists(SQLite3Stmt $stmt): bool
     {
-        if(($stmt->execute()->fetchArray()) == false) {
-            $stmt->close();
-            return false;
-        }
+        $res = boolval($stmt->execute()->fetchArray());
         $stmt->close();
-        return true;
+        return $res;
     }
 
     public function finish(SQLite3Stmt $stmt): bool
     {
-        if (!$stmt->execute() & $stmt->close()) {
-            return true;
-        }
-
-        return false;
+        $res = boolval($stmt->execute());
+        $stmt->close();
+        return $res;
     }
 
     public function query(string $query): SQLite3Result
@@ -63,6 +58,10 @@ class Database
     public function escapeString(string $string): string
     {
         return $this->database->escapeString($string);
+    }
+
+    public function lastInsertRowID(): int {
+        return $this->database->lastInsertRowID();
     }
 
     private function getConnection(): SQLite3

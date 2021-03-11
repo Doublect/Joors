@@ -71,12 +71,12 @@ class SessionDB extends Database
             return false;
         }
 
-
-
         // There is a valid session, update session expiration
         $stmt = $this->prepare('UPDATE Session SET ExpiryTime = ? WHERE OwnerID = ?');
         $stmt->bindValue(1, time() + 300, SQLITE3_INTEGER);
         $stmt->bindValue(2, $sess->OwnerID, SQLITE3_INTEGER);
+        $stmt->execute();
+        $stmt->close();
 
         return true;
     }

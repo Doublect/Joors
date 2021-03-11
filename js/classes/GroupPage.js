@@ -17,9 +17,12 @@ export default class GroupPage extends Page {
         let groupEntity = this.groupEntity;
         let membersreq;
         let newtaskassign = $("#assigned");
-        let taskForm = $("#taskcreate");
 
         createHeaderElement(this.groupEntity.Group, pageID);
+
+        if(JSON.parse(localStorage.getItem("Session")).OwnerID !== this.groupEntity.Group.OwnerID) {
+            $("#usermanagement").remove();
+        }
 
         if (this.groupEntity.Members.length === 0) {
              membersreq = G.getMembers(this.groupEntity).then(
@@ -59,50 +62,19 @@ export default class GroupPage extends Page {
             groupMemberChange($("#username")[0].value, groupEntity, "Remove", pageID);
         });
 
-        taskForm.find("#submit").on("click", function (event){
-            event.preventDefault();
-            parseNewTaskForm(taskForm, groupEntity.Group.ID);
+        // Get chores and display them
+        $.when(membersreq, G.getChores(this.groupEntity)).then(
+            function (memres, res) {
+                for (let key in res) {
+                    createTaskElement(res[key], pageID);
+                }
+
+                createTaskForm(groupEntity.Group.ID, pageID);
+            }, function () {
+                alert("Couldn't load task list!");
         });
-
-        if (this.groupEntity.Chores.length === 0) {
-            $.when(membersreq, G.getChores(this.groupEntity)).then(
-                function (memres, res) {
-                    for (let i = 0; i < res.length; i++) {
-                        let task = Object.assign(new Task, res[i]);
-
-                        createTaskElement(task, pageID);
-                    }
-                }, function () {
-                    alert("Couldn't load task list!");
-                });
-        } else {
-            for (let i = 0; i < this.groupEntity.Chores.length; i++) {
-                createTaskElement(this.groupEntity.Chores[i], this.ID);
-            }
-        }
     }
 }
-
-let taskSnippet =`
-<div class="box-element task">
-    <div id="header" class="task-header">
-        <h3 id="title" class="task-header-element"></h3>
-        <p id="delete" class="task-header-element float-right">Delete</p>
-        <p class="task-header-element float-right">Options</p>
-    </div>
-    <div>
-        <p id="description" class="inline-element description">Description</p>
-        <p class="inline-element float-right">Due by:</p>
-
-    </div>
-    <div>
-        <div id="assigned" class="inline-element"></div>
-        <form class="inline-element float-right">
-            <input class="inline-element" type="file">
-            <input class="inline-element" type="submit">
-        </form>
-    </div>
-</div>`;
 
 export function createHeaderElement(group, pageID) {
     const header = $("#content-" + pageID).find("#group-header");
@@ -168,14 +140,43 @@ export function createTaskElement(task, pageID)
 
     let assignelem = taskElem.find("#assigned");
 
-    for(let i = 0; i < task.Assigned.length; i++) {
-        let p = $("<p></p>").text(users[task.Assigned[i]].Name);
-        p.addClass("inline-element");
+    if(task.Assigned) {
+        for (let i = 0; i < task.Assigned.length; i++) {
+            let p = $("<p></p>").text(users[task.Assigned[i]].Name);
+            p.addClass("inline-element");
 
-        assignelem.append(p);
+            assignelem.append(p);
+        }
     }
 
+    taskElem.find("#task-delete").on("click", function () {
+        if ($(this).hasClass("red")) {
+            $.post("api/taskDelete.php", { TaskID : task.ID, Session : localStorage.getItem("Session") }, function (){
+                taskElem.remove();
+            });
+        } else {
+            $(this).removeClass("dgrey");
+            $(this).addClass("red");
+            $(this).text("Are you sure?");
+        }
+    });
+
     tasksdiv.append(taskElem);
+}
+
+function createTaskForm(groupID, pageID) {
+    let formElem = $($.parseHTML(formSnippet));
+
+    let date = formElem.find("#date");
+    date[0].valueAsDate = new Date();
+    date[0].min = new Date().toISOString().split("T")[0];
+
+    formElem.find("#submit").on("click", function (event){
+        event.preventDefault();
+        parseNewTaskForm(formElem, groupID, pageID);
+    });
+
+    $("#content-" + pageID).find("#taskcreate").append(formElem);
 }
 
 function groupMemberChange(Username, groupEntity, action, pageID)
@@ -206,7 +207,7 @@ function groupMemberChange(Username, groupEntity, action, pageID)
         });
 }
 
-function parseNewTaskForm(form, groupID)
+function parseNewTaskForm(form, groupID, pageID)
 {
     let task = new Task;
 
@@ -240,5 +241,57 @@ function parseNewTaskForm(form, groupID)
                 Library.LogOut();
                 return;
             }
+
+            form.remove();
+            createTaskElement(task, pageID);
+            createTaskForm(groupID, pageID);
         });
 }
+
+let formSnippet = `
+<form method="post" class="box-element task">
+    <div id="header" class="task-header">
+        <input id="title" class="task-header-element" placeholder="Title*">
+        <input id="date" type="date" class="float-right"> <input id="time" type="time" value="12:00" class="float-right">
+    </div>
+    <div class="inline-block">
+        <textarea id="description" class="inline-element description" placeholder="Description"></textarea>
+        <select id="frequency" class="inline-element float-right">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+        </select>
+        <label for="frequency" class="inline-element float-right">Frequency:</label>
+    </div class="inline-block">
+    <div class="inline-block">
+        <label for="assigned" class="inline-element">Assign to:</label>
+        <select id="assigned" class="inline-element">
+            <option value="-2" selected>Auto-assign</option>
+            <option value="-1">No one</option>
+        </select>
+        <label for="length" class="inline-element">Length of task:</label>
+        <input type="number" id="length" class="inline-element" min="1" value="30" step="1">
+        <input type="submit" id="submit" class="inline-element float-right" value="Create">
+    </div>
+</form>`;
+
+let taskSnippet =`
+<div class="box-element task">
+    <div id="header" class="task-header">
+        <h3 id="title" class="task-header-element"></h3>
+        <button id='task-delete' class='task-header-element button float-right dgrey'>Delete</button>
+    </div>
+    <div class="inline-block">
+        <p id="description" class="inline-element description">Description</p>
+        <p class="inline-element float-right">Due by:</p>
+
+    </div>
+    <div class="inline-block">
+        <div id="assigned" class="inline-element"></div>
+        <form class="inline-element float-right">
+            <input class="inline-element" type="file">
+            <input class="inline-element" type="submit">
+        </form>
+    </div>
+</div>`;

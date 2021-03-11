@@ -15,4 +15,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['Task']) && isset($_POST
     $taskDB = new TaskDB($sess->OwnerID);
 
     $taskDB->addTask($task);
+
+    $task->ID = $taskDB->lastInsertRowID();
+
+    echo json_encode($task);
 }

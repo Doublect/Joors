@@ -12,14 +12,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['Session'])) {
     // Create userDB for user
     require_once '../classes/User.php';
     $userDB = new UserDB($sess->OwnerID);
+    $data = array();
 
     if(($groups = $userDB->getUsersGroups()) !== false) {
         $data['Member'] = $groups;
-
-        if(($invitations = $userDB->getInvitations()) !== false) {
-            $data['Invited'] = $invitations;
-        }
-
-        echo json_encode($data);
     }
+    if(($invitations = $userDB->getInvitations()) !== false) {
+        $data['Invited'] = $invitations;
+    }
+    echo json_encode($data);
 }

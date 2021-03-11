@@ -34,11 +34,13 @@ export function loadGroups() {
             if(data !== "") {
                 data = JSON.parse(data);
 
-                for (let i = 0; i < data.Member.length; i++) {
-                    let group = Object.assign(new Group, data.Member[i]);
-                    groups[group.ID] = new G.GroupEntity(group);
+                if(data.Member) {
+                    for (let i = 0; i < data.Member.length; i++) {
+                        let group = Object.assign(new Group, data.Member[i]);
+                        groups[group.ID] = new G.GroupEntity(group);
 
-                    createGroupElement(group);
+                        createGroupElement(group);
+                    }
                 }
 
                 if(data.Invited) {
@@ -55,7 +57,7 @@ export function loadGroups() {
 
             if(currentPage === undefined) {
                 //currentPage = new Page(undefined, 'homepage.html');
-                if(data.Member[0]) {
+                if(data.Member) {
                     currentPage = new GroupPage(homePage, 'grouppage.html', groups[data.Member[0].ID]);
                 } else {
                     currentPage = new Page(undefined, 'homepage.html');
@@ -155,7 +157,7 @@ function handleInvitation (groupID, action) {
         })
 }
 
-function loadGroupPage(groupID) {
+export function loadGroupPage(groupID) {
     currentPage.previous();
     currentPage = new GroupPage(homePage, 'grouppage.html', groups[groupID]);
 

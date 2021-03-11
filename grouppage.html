@@ -8,11 +8,11 @@
 
 <div id="members-section" class="section">
 
-    <div class="inline-element" style="width: 80%;">
+    <div class="inline-element" style="width: 100%;">
         <h2>Members</h2>
-        <div id="members" class="content box"> </div>
+        <div id="members" class="content rowbox"> </div>
     </div>
-    <div class="text-right">
+    <div id="usermanagement" class="text-right">
         <form id='memberform' method="post" action=""> <input id='username' placeholder="Username"> <label for="username"> </label> <input type='submit' id='addbtn' value='Add'> <input type='submit' id='removebtn' value='Remove'></form>
     </div>
 </div>
@@ -21,38 +21,6 @@
     <h2>Tasks</h2>
     <div id="tasks" class="box"></div>
     <div id="taskcreate" class="box">
-        <form method="post" class="box-element task">
-            <div id="header" class="task-header">
-                <input id="title" class="task-header-element" placeholder="Title*">
-                <input id="date" type="date" class="float-right"> <input id="time" type="time" value="12:00" class="float-right">
-                <script type="text/javascript">
-                    $( function () {
-                        let date = $("#date");
-                        date[0].valueAsDate = new Date();
-                        date[0].min = new Date().toISOString().split("T")[0];
-                    });
-                </script>
-            </div>
-            <div>
-                <textarea id="description" class="inline-element description" placeholder="Description"></textarea>
-                <select id="frequency" class="inline-element float-right">
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                </select>
-                <label for="frequency" class="inline-element float-right">Frequency:</label>
-            </div>
-            <div>
-                <label for="assigned" class="inline-element">Assign to:</label>
-                <select id="assigned" class="inline-element">
-                    <option value="-2" selected>Auto-assign</option>
-                    <option value="-1">No one</option>
-                </select>
-                <label for="length" class="inline-element">Length of task:</label>
-                <input type="number" id="length" class="inline-element" min="1" value="30" step="1">
-                <input type="submit" id="submit" class="inline-element float-right" value="Create">
-            </div>
-        </form>
+
     </div>
 </div>

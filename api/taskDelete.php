@@ -1,6 +1,6 @@
 <?php
 
-if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['taskID']) && isset($_POST['Session'])) {
+if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['TaskID']) && isset($_POST['Session'])) {
     require_once '../auth/Session.php';
     $sess = Session::jsonDeserialize($_POST['Session']);
 
@@ -12,10 +12,8 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['taskID']) && isset($_PO
 
     // Create taskDB for user
     require_once '../classes/Task.php';
-    $taskID = intval(Input::test_input($_POST['taskID']));
+    $taskID = intval(Input::test_input($_POST['TaskID']));
     $taskDB = new TaskDB($sess->OwnerID);
 
-    if(($task = $taskDB->getTask($taskID)) !== false) {
-        echo json_encode($task);
-    }
+    $taskDB->removeTask($taskID);
 }
