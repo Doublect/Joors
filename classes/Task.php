@@ -142,6 +142,20 @@ class TaskDB extends Database
         return $this->finish($stmt);
     }
 
+    public function assignTask(int $taskID, int $userID = null): bool
+    {
+        $stmt = $this->prepare('INSERT INTO Assigned (ID, TaskID, UserID) VALUES (NULL, ?, ?)');
+
+        $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
+        if($userID) {
+            $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
+        } else {
+            $stmt->bindValue(2, $this->userID, SQLITE3_INTEGER);
+        }
+
+        return $this->finish($stmt);
+    }
+
     // ------------------------------------------------------------------------
     // REMOVE
 
@@ -150,6 +164,20 @@ class TaskDB extends Database
         $stmt = $this->prepare('DELETE FROM Task WHERE ID = ? and groupID IN (SELECT GroupID FROM UserGroup WHERE UserID = ?)');
         $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
         $stmt->bindValue(2, $this->userID, SQLITE3_INTEGER);
+
+        return $this->finish($stmt);
+    }
+
+    public function unassignTask(int $taskID, int $userID = null): bool
+    {
+        $stmt = $this->prepare('DELETE FROM Assigned WHERE TaskID = ? and UserID = ?');
+
+        $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
+        if($userID) {
+            $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
+        } else {
+            $stmt->bindValue(2, $this->userID, SQLITE3_INTEGER);
+        }
 
         return $this->finish($stmt);
     }

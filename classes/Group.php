@@ -1,6 +1,7 @@
 <?php
 
 require_once 'Database.php';
+require_once 'User.php';
 
 class Group implements IDBConvert
 {
@@ -51,6 +52,18 @@ class Group implements IDBConvert
     }
 }
 
+class LoadPair
+{
+    public int $UserID;
+    public int $Amount;
+
+    public function __construct(int $UserID, int $Amount)
+    {
+        $this->UserID = $UserID;
+        $this->Amount = $Amount;
+    }
+}
+
 class GroupDB extends Database
 {
     private int $groupID;
@@ -97,7 +110,7 @@ class GroupDB extends Database
         $stmt->bindValue(1, $Name, SQLITE3_TEXT);
         $stmt->bindValue(2, $ownerID, SQLITE3_INTEGER);
 
-        return Group::fetchSingle($stmt);
+        return User::fetchSingle($stmt);
     }
 
     public function getMembers(): array|false
@@ -118,10 +131,58 @@ class GroupDB extends Database
 
     public function getOwnerID(): int
     {
-        $stmt =  $this->prepare('SELECT OwnerID FROM "Group" WHERE ID = ?');
+        $stmt = $this->prepare('SELECT OwnerID FROM "Group" WHERE ID = ?');
         $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
 
         return Group::fetchSingle($stmt)->OwnerID;
+    }
+
+    public function getUserLoad(): array|false
+    {
+        $stmt = $this->prepare('SELECT UserID, Load FROM UserGroup WHERE GroupID = ?');
+        $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
+
+        $res = $stmt->execute();
+        $return = array();
+
+        if(!($row = $res->fetchArray())) {
+            $stmt->close();
+            return false;
+        }
+
+        do {
+            $load = new LoadPair($row['Load'], $row['UserID']);
+
+            $return[] = $load;
+        } while ($row = $res->fetchArray());
+
+        $stmt->close();
+        return $return;
+    }
+
+    public function getMinimumLoad(): int|false
+    {
+        $stmt = $this->prepare('SELECT UserID, Load FROM UserGroup WHERE GroupID = ?');
+        $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
+
+        $res = $stmt->execute();
+
+        if(!($row = $res->fetchArray())) {
+            $stmt->close();
+            return false;
+        }
+
+        $minLoad = PHP_INT_MAX;
+        $id = -1;
+
+        do {
+            if($row['Load'] < $minLoad) {
+                $minLoad = $row['Load'];
+                $id = $row['UserID'];
+            }
+        } while ($row = $res->fetchArray());
+
+        return $id;
     }
 
     // ------------------------------------------------------------------------
@@ -199,5 +260,14 @@ class GroupDB extends Database
     // ------------------------------------------------------------------------
     // UPDATE
 
+    public function changeUserLoad(LoadPair $pair): bool
+    {
+        $stmt = $this->prepare('UPDATE UserGroup SET Load = Load + ? WHERE GroupID = ? AND UserID = ?');
+        $stmt->bindValue(1, $pair->Amount, SQLITE3_INTEGER);
+        $stmt->bindValue(2, $this->groupID, SQLITE3_INTEGER);
+        $stmt->bindValue(3, $pair->UserID, SQLITE3_INTEGER);
+
+        return $this->finish($stmt);
+    }
 }
 
