@@ -4,7 +4,8 @@ import Page from "./Page.js";
 import {users, goHome, loadGroups} from "../home.js";
 import * as Library from "../Library.js";
 
-export default class GroupPage extends Page {
+export default class GroupPage extends Page
+{
     groupEntity;
 
     constructor(previous, current, GroupEntity) {
@@ -16,7 +17,7 @@ export default class GroupPage extends Page {
         let pageID = this.ID;
         let groupEntity = this.groupEntity;
         let membersreq;
-        let newtaskassign = $("#assigned");
+        let newtaskassign = $("#assignedselect");
 
         createHeaderElement(this.groupEntity.Group, pageID);
 
@@ -65,18 +66,19 @@ export default class GroupPage extends Page {
         // Get chores and display them
         $.when(membersreq, G.getChores(this.groupEntity)).then(
             function (memres, res) {
-                for (let key in res) {
+                for (const key in res) {
                     createTaskElement(res[key], pageID);
                 }
 
-                createTaskForm(groupEntity.Group.ID, pageID);
+                createTaskForm(groupEntity, pageID);
             }, function () {
                 alert("Couldn't load task list!");
         });
     }
 }
 
-export function createHeaderElement(group, pageID) {
+export function createHeaderElement(group, pageID)
+{
     const header = $("#content-" + pageID).find("#group-header");
 
     // Show the name of the groupEntity
@@ -105,7 +107,8 @@ export function createHeaderElement(group, pageID) {
     }
 }
 
-function createUserElement(user, pageID) {
+function createUserElement(user, pageID)
+{
     const membersdiv = $("#content-" + pageID).find("#members");
 
     let p = $("<p></p>").text(user.Name);
@@ -114,7 +117,8 @@ function createUserElement(user, pageID) {
     membersdiv.append(p);
 }
 
-function deleteUserElement(user, pageID) {
+function deleteUserElement(user, pageID)
+{
     $("#content-" + pageID).find("#members").children().remove("p:contains(" + user.Name + ")");
 }
 
@@ -136,7 +140,6 @@ export function createTaskElement(task, pageID)
 
     taskElem.find("#title").text(task.Name);
     taskElem.find("#description").text(task.Desc);
-    //taskelem.find($("#delete")).on("click")
 
     let assignelem = taskElem.find("#assigned");
 
@@ -164,16 +167,20 @@ export function createTaskElement(task, pageID)
     tasksdiv.append(taskElem);
 }
 
-function createTaskForm(groupID, pageID) {
+function createTaskForm(groupEntity, pageID)
+{
     let formElem = $($.parseHTML(formSnippet));
 
     let date = formElem.find("#date");
     date[0].valueAsDate = new Date();
     date[0].min = new Date().toISOString().split("T")[0];
 
+    let assigned = formElem.find("#assignedselect");
+    assignUserEvent(assigned[0]);
+
     formElem.find("#submit").on("click", function (event){
         event.preventDefault();
-        parseNewTaskForm(formElem, groupID, pageID);
+        parseNewTaskForm(formElem, groupEntity, pageID);
     });
 
     $("#content-" + pageID).find("#taskcreate").append(formElem);
@@ -200,14 +207,36 @@ function groupMemberChange(Username, groupEntity, action, pageID)
                 if (action === "Add") {
                     groupEntity.Members.push(user.ID);
                     createUserElement(user, pageID);
+
+                    let addEvent = new CustomEvent("userAdd", { detail: { userID: user.ID}} );
+                    dispatchUserEvent(addEvent);
+
                 } else if (action === "Remove") {
                     deleteUserElement(user, pageID);
+
+                    let removeEvent = new CustomEvent("userRemove", { detail: { userID: user.ID }} );
+                    dispatchUserEvent(removeEvent);
                 }
             }
         });
 }
 
-function parseNewTaskForm(form, groupID, pageID)
+function dispatchUserEvent(userEvent) {
+    $("#assignedselect").each( function () {
+        this.dispatchEvent(userEvent);
+    })
+}
+
+function assignUserEvent(element) {
+    element.addEventListener("userAdd", function(event) {
+        $(element).append($("<option>", { value : event.detail.userID, text : users[event.detail.userID].Name}))
+    });
+    element.addEventListener("userRemove", function(event) {
+        $(element).children('option[value="' + event.detail.userID.toString() + '"]').remove();
+    });
+}
+
+function parseNewTaskForm(form, groupEntity, pageID)
 {
     let task = new Task;
 
@@ -217,7 +246,7 @@ function parseNewTaskForm(form, groupID, pageID)
         return;
     }
 
-    task.GroupID = groupID;
+    task.GroupID = groupEntity.Group.ID;
 
     // Read in fields
     task.Desc = form.find("#description").val();
@@ -225,7 +254,7 @@ function parseNewTaskForm(form, groupID, pageID)
     task.Completed = 0;
 
     // Get the selected elements from the drop-downs
-    let assigned = form.find("#assigned").children(":selected").val();
+    let assigned = form.find("#assignedselect").children(":selected").val();
     task.Frequency = form.find("#frequency").children(":selected").val();
 
     // Get the time and date passed in the form
@@ -244,7 +273,7 @@ function parseNewTaskForm(form, groupID, pageID)
 
             form.remove();
             createTaskElement(task, pageID);
-            createTaskForm(groupID, pageID);
+            createTaskForm(groupEntity, pageID);
         });
 }
 
@@ -265,8 +294,8 @@ let formSnippet = `
         <label for="frequency" class="inline-element float-right">Frequency:</label>
     </div class="inline-block">
     <div class="inline-block">
-        <label for="assigned" class="inline-element">Assign to:</label>
-        <select id="assigned" class="inline-element">
+        <label for="assignedselect" class="inline-element">Assign to:</label>
+        <select id="assignedselect" class="inline-element asd">
             <option value="-2" selected>Auto-assign</option>
             <option value="-1">No one</option>
         </select>

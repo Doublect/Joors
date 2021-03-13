@@ -1,6 +1,6 @@
 <?php
-require_once "Task.php";
-require_once "Group.php";
+require_once 'Task.php';
+require_once 'Group.php';
 
 function freqMult(string $frequency): int {
     switch ($frequency){
@@ -12,8 +12,9 @@ function freqMult(string $frequency): int {
             return 12;
         case 'yearly':
             return 1;
+        default:
+            return 0;
     }
-    return 0;
 }
 
 /**

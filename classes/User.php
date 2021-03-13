@@ -95,17 +95,17 @@ class UserDB extends Database
 
     public function emailExists(string $email): bool
     {
-        $stmt = $this->prepare('SELECT Name FROM User WHERE Email = :email');
-        $stmt->bindValue(':email', $email, SQLITE3_TEXT);
+        $stmt = $this->prepare('SELECT Name FROM User WHERE Email = ?');
+        $stmt->bindValue(1, $email, SQLITE3_TEXT);
 
         return $this->exists($stmt);
     }
 
     public function uniqueCheck(User $acc): bool
     {
-        $stmt = $this->prepare('SELECT Name FROM User WHERE Email = :email OR Name = :uname');
-        $stmt->bindValue(':email', $acc->Email, SQLITE3_TEXT);
-        $stmt->bindValue(':uname', $acc->Name, SQLITE3_TEXT);
+        $stmt = $this->prepare('SELECT Name FROM User WHERE Email = ? OR Name = ?');
+        $stmt->bindValue(1, $acc->Email, SQLITE3_TEXT);
+        $stmt->bindValue(2, $acc->Name, SQLITE3_TEXT);
 
         return $this->exists($stmt);
     }
@@ -115,16 +115,16 @@ class UserDB extends Database
 
     public function getUser(): User|false
     {
-        $stmt = $this->prepare('SELECT * FROM User WHERE ID = :userID');
-        $stmt->bindValue(':userID', $this->userID, SQLITE3_INTEGER);
+        $stmt = $this->prepare('SELECT * FROM User WHERE ID = ?');
+        $stmt->bindValue(1, $this->userID, SQLITE3_INTEGER);
 
         return User::fetchSingle($stmt);
     }
 
     public function getUserByName(string $username): User|false
     {
-        $stmt = $this->prepare('SELECT * FROM User WHERE Name = :uname');
-        $stmt->bindValue(':uname', $username, SQLITE3_TEXT);
+        $stmt = $this->prepare('SELECT * FROM User WHERE Name = ?');
+        $stmt->bindValue(1, $username, SQLITE3_TEXT);
 
         return User::fetchSingle($stmt);
     }
@@ -143,11 +143,6 @@ class UserDB extends Database
         $stmt->bindValue(1, $this->userID, SQLITE3_INTEGER);
 
         return Group::fetch($stmt);
-    }
-
-    public function getTasks(): array|false
-    {
-        $stmt = $this->prepare("SELECT * FROM Task WHERE GroupID in (SELECT GroupID FROM UserGroup WHERE UserID = ?)");
     }
 
     // ------------------------------------------------------------------------

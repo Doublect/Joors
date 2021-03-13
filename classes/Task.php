@@ -1,6 +1,7 @@
 <?php
 
 require_once 'Database.php';
+require_once 'Allocator.php';
 
 class Task implements IDBConvert, JsonSerializable
 {
@@ -90,6 +91,20 @@ class TaskDB extends Database
     }
 
     // ------------------------------------------------------------------------
+    // CHECKS
+
+    public function isAssigned(int $taskID, int $userID = null): bool
+    {
+        $userID = $userID ?? $this->userID;
+
+        $stmt = $this->prepare('SELECT ID FROM Assigned WHERE TaskID = ? and UserID = ?');
+        $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
+        $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
+
+        return $this->exists($stmt);
+    }
+
+    // ------------------------------------------------------------------------
     // GET
 
     public function getTask(int $taskID): Task|false
@@ -144,14 +159,12 @@ class TaskDB extends Database
 
     public function assignTask(int $taskID, int $userID = null): bool
     {
+        $userID = $userID ?? $this->userID;
+
         $stmt = $this->prepare('INSERT INTO Assigned (ID, TaskID, UserID) VALUES (NULL, ?, ?)');
 
         $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
-        if($userID) {
-            $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
-        } else {
-            $stmt->bindValue(2, $this->userID, SQLITE3_INTEGER);
-        }
+        $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
 
         return $this->finish($stmt);
     }
@@ -159,8 +172,25 @@ class TaskDB extends Database
     // ------------------------------------------------------------------------
     // REMOVE
 
+    /**
+     * Handles removal of task from database and related entries. Updates the users loads to account for the removal.
+     * @param int $taskID <p> A taskID existing in the database </p>
+     * @return bool Returns the result of executing the final statement.
+     */
     public function removeTask(int $taskID): bool
     {
+        // Change the user's load to reflect the removal of the task
+        $task = $this->getTask($taskID);
+        foreach ($this->getAssigned($taskID) as $user) {
+            unallocate($task, $user);
+        }
+
+        // Remove assigned
+        $stmt = $this->prepare('DELETE FROM Assigned WHERE TaskID = ?');
+        $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
+        $this->finish($stmt);
+
+        // Remove task
         $stmt = $this->prepare('DELETE FROM Task WHERE ID = ? and groupID IN (SELECT GroupID FROM UserGroup WHERE UserID = ?)');
         $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
         $stmt->bindValue(2, $this->userID, SQLITE3_INTEGER);
@@ -170,14 +200,12 @@ class TaskDB extends Database
 
     public function unassignTask(int $taskID, int $userID = null): bool
     {
+        $userID = $userID ?? $this->userID;
+
         $stmt = $this->prepare('DELETE FROM Assigned WHERE TaskID = ? and UserID = ?');
 
         $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
-        if($userID) {
-            $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
-        } else {
-            $stmt->bindValue(2, $this->userID, SQLITE3_INTEGER);
-        }
+        $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
 
         return $this->finish($stmt);
     }

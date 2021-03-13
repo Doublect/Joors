@@ -79,11 +79,11 @@ class GroupDB extends Database
 
     public function isMember(int $userID): bool
     {
-        $stmt1 = $this->prepare("SELECT ID FROM UserGroup WHERE GroupID = ? AND UserID = ?");
+        $stmt1 = $this->prepare('SELECT ID FROM UserGroup WHERE GroupID = ? AND UserID = ?');
         $stmt1->bindValue(1, $this->groupID, SQLITE3_INTEGER);
         $stmt1->bindValue(2, $userID, SQLITE3_INTEGER);
 
-        $stmt2 = $this->prepare("SELECT ID FROM Invitation WHERE GroupID = ? AND UserID = ?");
+        $stmt2 = $this->prepare('SELECT ID FROM Invitation WHERE GroupID = ? AND UserID = ?');
         $stmt2->bindValue(1, $this->groupID, SQLITE3_INTEGER);
         $stmt2->bindValue(2, $userID, SQLITE3_INTEGER);
 
@@ -97,7 +97,7 @@ class GroupDB extends Database
 
     public function getGroup(int $userID): Group|false
     {
-        $stmt = $this->prepare("SELECT 'Group'.* FROM 'Group', UserGroup WHERE UserGroup.GroupID = ? AND UserGroup.UserID = ?");
+        $stmt = $this->prepare('SELECT "Group".* FROM "Group", UserGroup WHERE UserGroup.GroupID = ? AND UserGroup.UserID = ?');
         $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
         $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
 
@@ -106,11 +106,11 @@ class GroupDB extends Database
 
     public function getGroupByName(string $Name, int $ownerID): Group|false
     {
-        $stmt = $this->prepare("SELECT 'Group'.* FROM 'Group' WHERE Name = ? AND OwnerID = ?");
+        $stmt = $this->prepare('SELECT "Group".* FROM "Group" WHERE Name = ? AND OwnerID = ?');
         $stmt->bindValue(1, $Name, SQLITE3_TEXT);
         $stmt->bindValue(2, $ownerID, SQLITE3_INTEGER);
 
-        return User::fetchSingle($stmt);
+        return Group::fetchSingle($stmt);
     }
 
     public function getMembers(): array|false
@@ -190,7 +190,7 @@ class GroupDB extends Database
 
     public function addGroup(string $Name, int $userID): bool
     {
-        $stmt = $this->prepare("INSERT INTO 'Group' (ID, Name, OwnerID) VALUES (NULL, ?, ?)");
+        $stmt = $this->prepare('INSERT INTO "Group" (ID, Name, OwnerID) VALUES (NULL, ?, ?)');
 
         $stmt->bindValue(1, $Name, SQLITE3_TEXT);
         $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
@@ -223,17 +223,24 @@ class GroupDB extends Database
 
     public function removeGroup(int $userID): bool
     {
-        $stmt = $this->prepare("DELETE FROM 'Group' WHERE ID = ? AND OwnerID = ?");
+        // Remove the group
+        $stmt = $this->prepare('DELETE FROM "Group" WHERE ID = ? AND OwnerID = ?');
         $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
         $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
 
         $this->finish($stmt);
 
-        $stmt = $this->prepare("DELETE FROM 'UserGroup' WHERE GroupID = ?");
+        // Remove membership
+        $stmt = $this->prepare('DELETE FROM UserGroup WHERE GroupID = ?');
         $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
         $this->finish($stmt);
 
-        $stmt = $this->prepare("DELETE FROM 'Task' WHERE GroupID = ?");
+        // Remove invitations
+        $stmt = $this->prepare('DELETE FROM Invitation WHERE GroupID = ?');
+        $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
+        $this->finish($stmt);
+
+        $stmt = $this->prepare('DELETE FROM Task WHERE GroupID = ?');
         $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
 
         return $this->finish($stmt);
