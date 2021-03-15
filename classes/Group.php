@@ -151,7 +151,7 @@ class GroupDB extends Database
         }
 
         do {
-            $load = new LoadPair($row['Load'], $row['UserID']);
+            $load = new LoadPair($row['UserID'], $row['Load']);
 
             $return[] = $load;
         } while ($row = $res->fetchArray());

@@ -16,7 +16,7 @@ CREATE TABLE UserGroup (
     ID INTEGER,
     UserID int,
     GroupID int,
-    Load int,
+    Load int DEFAULT 0,
     PRIMARY KEY (ID),
     FOREIGN KEY (UserID) REFERENCES User(ID) ON DELETE CASCADE,
     FOREIGN KEY (GroupID) REFERENCES "Group"(ID) ON DELETE CASCADE
@@ -37,6 +37,7 @@ CREATE TABLE Task (
     Name varchar(128),
     Desc varchar(1024),
     Frequency varchar(32),
+    FreqMult int,
     Length int,
     Completed bool,
     CreationTime DATETIME,

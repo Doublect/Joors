@@ -1,5 +1,7 @@
 <?php
 
+use JetBrains\PhpStorm\Pure;
+
 require_once 'Database.php';
 require_once 'Allocator.php';
 
@@ -10,9 +12,28 @@ class Task implements IDBConvert, JsonSerializable
     public string $Name;
     public string $Desc;
     public string $Frequency;
+    public int $FreqMult;
     public int $Length;
     public bool $Completed;
     public int $Next;
+
+    public function getLoad(): int
+    {
+        return Task::freqConvert($this->Frequency) * $this->FreqMult * $this->Length;
+    }
+
+    public function checkNext(): void
+    {
+        $time = time();
+
+        if($this->Next < $time) {
+            $freqtime = Task::freqTime($this->Frequency);
+            $this->Next += (($time - $this->Next) / $freqtime + 1) * $freqtime;
+            $this->Completed = false;
+
+            (new TaskDB(-1))->updateNext($this->ID, $this->Next);
+        }
+    }
 
     public static function fromRow(array $row) : Task
     {
@@ -23,9 +44,15 @@ class Task implements IDBConvert, JsonSerializable
         $task->Name = $row['Name'] ?? '';
         $task->Desc = $row['Desc'] ?? '';
         $task->Frequency = $row['Frequency'] ?? '';
+        $task->FreqMult = $row['FreqMult'] ?? 1;
+        $task->GroupID = $row['GroupID'] ?? -1;
         $task->Length = $row['Length'] ?? -1;
         $task->Completed = $row['Completed'] ?? -1;
         $task->Next = $row['Next'] ?? -1;
+
+        $task->FreqMult = min(12, max(1, $task->FreqMult));
+
+        $task->checkNext();
 
         return $task;
     }
@@ -77,6 +104,36 @@ class Task implements IDBConvert, JsonSerializable
         }
 
         return $task;
+    }
+
+    public static function freqConvert(string $frequency): int {
+        switch ($frequency){
+            case 'daily':
+                return 365;
+            case 'weekly':
+                return 52;
+            case 'monthly':
+                return 12;
+            case 'yearly':
+                return 1;
+            default:
+                return 0;
+        }
+    }
+
+    public static function freqTime(string $frequency): int {
+        switch ($frequency){
+            case 'daily':
+                return 86400;
+            case 'weekly':
+                return 604800;
+            case 'monthly':
+                return 2592000;
+            case 'yearly':
+                return 31536000;
+            default:
+                return 0;
+        }
     }
 }
 
@@ -212,5 +269,15 @@ class TaskDB extends Database
 
     // ------------------------------------------------------------------------
     // UPDATE
+
+    public function updateNext(int $taskID, int $time)
+    {
+        $stmt = $this->prepare('UPDATE Task SET Next = ? AND Completed = 0 WHERE ID = ?');
+
+        $stmt->bindValue(1, $time, SQLITE3_INTEGER);
+        $stmt->bindValue(2, $taskID, SQLITE3_INTEGER);
+
+        return $this->finish($stmt);
+    }
 }
 

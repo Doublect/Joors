@@ -7,27 +7,18 @@ h2 {
     flex-direction: column;
 
     width: auto;
-    background: wheat;
+    background: inherit;
 }
 
 .rowbox {
     display: flex;
     flex-direction: row;
-
-    width: auto;
-    background: wheat;
-}
-.overlay-box {
-    display: flex;
-    flex-direction: column;
-
-    justify-content: center;
+    flex-wrap: wrap;
+    
     align-items: center;
-
     width: auto;
-    background: wheat;
+    background: inherit;
 }
-
 
 .box-element {
     width: max-content;
@@ -42,6 +33,26 @@ h2 {
     width: 100%;
 }
 
+.inline-box {
+    display: inline-flex;
+}
+
+.justify-space {
+    justify-content: space-between;
+}
+
+.margin-left {
+    margin-left: auto;
+}
+
+.margin-l6 {
+    margin-left: 6px;
+}
+
+.margin-r6 {
+    margin-right: 6px;
+}
+
 .section {
     padding: 5px 30px 5px 30px;
     margin: 20px 10px 20px 10px;
@@ -51,7 +62,6 @@ h2 {
 
 .task {
     margin: 10px 0 10px 0;
-    padding-bottom: 6px;
     width: auto;
     background: lightgrey;
 }
@@ -69,6 +79,10 @@ h2 {
     margin: 0;
 }
 
+.margin-6 {
+    margin: 6px;
+}
+
 .inline-element {
     display: inline-block;
     padding: 3px 6px;
@@ -77,9 +91,15 @@ h2 {
     margin: 3px;
 }
 
-.description {
+.desc-box {
     max-width: 70%;
     min-width: 50%;
+    margin-left: 6px;
+}
+
+.description {
+    padding-left: 6px;
+    overflow-wrap: break-word;
 }
 
 .overlay-content {
@@ -95,4 +115,9 @@ h2 {
     padding-top: 0;
     margin-top: -3px;
     margin-right: -2px;
+}
+
+.bottom {
+    bottom: 0;
+    margin: 0;
 }

@@ -1,5 +1,5 @@
 import * as G from "./Group.js";
-import Task from "./Task.js";
+import Task, {createTaskElement, createTaskForm, assignUserEvent, parseNewTaskForm} from "./Task.js";
 import Page from "./Page.js";
 import {users, goHome, loadGroups} from "../home.js";
 import * as Library from "../Library.js";
@@ -33,7 +33,7 @@ export default class GroupPage extends Page
                             users[res[i].ID] = res[i];
 
                         createUserElement(res[i], pageID);
-                        addUserNewTaskOption(res[i], newtaskassign);
+                        Library.addUserAsOption(res[i], newtaskassign);
                     }
 
                     let invited = groupEntity.Invited;
@@ -50,7 +50,7 @@ export default class GroupPage extends Page
         } else {
             for (let i = 0; i < this.groupEntity.Members.length; i++) {
                 createUserElement(this.groupEntity.Members[i], this.ID);
-                addUserNewTaskOption(this.groupEntity.Members[i], newtaskassign);
+                Library.addUserAsOption(this.groupEntity.Members[i], newtaskassign);
             }
         }
 
@@ -122,70 +122,6 @@ function deleteUserElement(user, pageID)
     $("#content-" + pageID).find("#members").children().remove("p:contains(" + user.Name + ")");
 }
 
-function addUserNewTaskOption(user, elem)
-{
-    let option = $("<option></option>");
-
-    option.attr("id", user.ID);
-    option.text(user.Name);
-
-    elem.append(option);
-}
-
-export function createTaskElement(task, pageID)
-{
-    const tasksdiv = $("#content-" + pageID).find("#tasks");
-
-    let taskElem = $($.parseHTML(taskSnippet));
-
-    taskElem.find("#title").text(task.Name);
-    taskElem.find("#description").text(task.Desc);
-
-    let assignelem = taskElem.find("#assigned");
-
-    if(task.Assigned) {
-        for (let i = 0; i < task.Assigned.length; i++) {
-            let p = $("<p></p>").text(users[task.Assigned[i]].Name);
-            p.addClass("inline-element");
-
-            assignelem.append(p);
-        }
-    }
-
-    taskElem.find("#task-delete").on("click", function () {
-        if ($(this).hasClass("red")) {
-            $.post("api/taskDelete.php", { TaskID : task.ID, Session : localStorage.getItem("Session") }, function (){
-                taskElem.remove();
-            });
-        } else {
-            $(this).removeClass("dgrey");
-            $(this).addClass("red");
-            $(this).text("Are you sure?");
-        }
-    });
-
-    tasksdiv.append(taskElem);
-}
-
-function createTaskForm(groupEntity, pageID)
-{
-    let formElem = $($.parseHTML(formSnippet));
-
-    let date = formElem.find("#date");
-    date[0].valueAsDate = new Date();
-    date[0].min = new Date().toISOString().split("T")[0];
-
-    let assigned = formElem.find("#assignedselect");
-    assignUserEvent(assigned[0]);
-
-    formElem.find("#submit").on("click", function (event){
-        event.preventDefault();
-        parseNewTaskForm(formElem, groupEntity, pageID);
-    });
-
-    $("#content-" + pageID).find("#taskcreate").append(formElem);
-}
-
 function groupMemberChange(Username, groupEntity, action, pageID)
 {
     $.post("api/groupMembership.php", { Action : action, Username : Username, GroupID : groupEntity.Group.ID, Session : localStorage.getItem("Session")},
@@ -226,101 +162,3 @@ function dispatchUserEvent(userEvent) {
         this.dispatchEvent(userEvent);
     })
 }
-
-function assignUserEvent(element) {
-    element.addEventListener("userAdd", function(event) {
-        $(element).append($("<option>", { value : event.detail.userID, text : users[event.detail.userID].Name}))
-    });
-    element.addEventListener("userRemove", function(event) {
-        $(element).children('option[value="' + event.detail.userID.toString() + '"]').remove();
-    });
-}
-
-function parseNewTaskForm(form, groupEntity, pageID)
-{
-    let task = new Task;
-
-    // Make sure the title is set
-    task.Name = form.find("#title").val();
-    if(task.Name === "") {
-        return;
-    }
-
-    task.GroupID = groupEntity.Group.ID;
-
-    // Read in fields
-    task.Desc = form.find("#description").val();
-    task.Length = form.find("#length").val();
-    task.Completed = 0;
-
-    // Get the selected elements from the drop-downs
-    let assigned = form.find("#assignedselect").children(":selected").val();
-    task.Frequency = form.find("#frequency").children(":selected").val();
-
-    // Get the time and date passed in the form
-    // First get the date, then get the string representation of time (hh:mm)
-    // Finally convert the time to seconds
-    task.Next = Math.round(new Date(form.find("#date").val()).getTime() / 1000);
-    let timevals = form.find("#time").val().split(":");
-    task.Next += (parseInt(timevals[0]) * 60 + parseInt(timevals[1])) * 60;
-
-    $.post("api/taskCreate.php", { Task : JSON.stringify(task), Assigned : JSON.stringify(assigned), Session : localStorage.getItem("Session") },
-        function (data){
-            if(data === "2002"){
-                Library.LogOut();
-                return;
-            }
-
-            form.remove();
-            createTaskElement(task, pageID);
-            createTaskForm(groupEntity, pageID);
-        });
-}
-
-let formSnippet = `
-<form method="post" class="box-element task">
-    <div id="header" class="task-header">
-        <input id="title" class="task-header-element" placeholder="Title*">
-        <input id="date" type="date" class="float-right"> <input id="time" type="time" value="12:00" class="float-right">
-    </div>
-    <div class="inline-block">
-        <textarea id="description" class="inline-element description" placeholder="Description"></textarea>
-        <select id="frequency" class="inline-element float-right">
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
-        </select>
-        <label for="frequency" class="inline-element float-right">Frequency:</label>
-    </div class="inline-block">
-    <div class="inline-block">
-        <label for="assignedselect" class="inline-element">Assign to:</label>
-        <select id="assignedselect" class="inline-element asd">
-            <option value="-2" selected>Auto-assign</option>
-            <option value="-1">No one</option>
-        </select>
-        <label for="length" class="inline-element">Length of task:</label>
-        <input type="number" id="length" class="inline-element" min="1" value="30" step="1">
-        <input type="submit" id="submit" class="inline-element float-right" value="Create">
-    </div>
-</form>`;
-
-let taskSnippet =`
-<div class="box-element task">
-    <div id="header" class="task-header">
-        <h3 id="title" class="task-header-element"></h3>
-        <button id='task-delete' class='task-header-element button float-right dgrey'>Delete</button>
-    </div>
-    <div class="inline-block">
-        <p id="description" class="inline-element description">Description</p>
-        <p class="inline-element float-right">Due by:</p>
-
-    </div>
-    <div class="inline-block">
-        <div id="assigned" class="inline-element"></div>
-        <form class="inline-element float-right">
-            <input class="inline-element" type="file">
-            <input class="inline-element" type="submit">
-        </form>
-    </div>
-</div>`;

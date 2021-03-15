@@ -11,12 +11,18 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['Task']) && isset($_POST
     }
 
     require_once '../classes/Task.php';
+    require_once '../classes/Input.php';
     $task = Task::jsonDeserialize($_POST['Task']);
+    $assigned = (int)Input::test_input(json_decode($_POST['Assigned']));
     $taskDB = new TaskDB($sess->OwnerID);
 
     $taskDB->addTask($task);
-
     $task->ID = $taskDB->lastInsertRowID();
 
-    echo json_encode($task);
+
+    require_once 'taskAssignment.php';
+    $data['Task'] = $task;
+    $data['Assigned'] = taskAssign('Add', $task, $assigned);
+
+    echo json_encode($data);
 }

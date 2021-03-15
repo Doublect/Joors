@@ -142,8 +142,3 @@ body {
 .margin-top{
     margin-top: 48px;
 }
-
-select {
-    display: block;
-    margin: 0 auto;
-}
