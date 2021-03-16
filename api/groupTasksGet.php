@@ -8,8 +8,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['GroupID']) && isset($_P
 
     // Check if session exists
     if(!(new SessionDB())->checkSession($sess)) {
-        echo '2002';
-        exit();
+        exit('2002');
     }
 
     // Create taskDB for user

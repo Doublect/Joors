@@ -18,9 +18,31 @@ export default class Task {
 
 export function createTaskElement(task, pageID)
 {
-    const tasksdiv = $("#content-" + pageID).find("#tasks");
 
-    let taskElem = $($.parseHTML(taskSnippet));
+    let tasksdiv;
+    let taskElem;
+
+    if(task.Completed === true) {
+        tasksdiv = $("#content-" + pageID).find("#tasksfin");
+        taskElem = $($.parseHTML(taskFinishedSnippet));
+    } else {
+        tasksdiv = $("#content-" + pageID).find("#tasks");
+        taskElem = $($.parseHTML(taskSnippet));
+
+        taskElem.find("#task-finish").on("click", function () {
+            if ($(this).hasClass("red")) {
+                $.post("api/taskFinish.php", { TaskID : task.ID, Session : localStorage.getItem("Session") }, function (){
+                    $("#content-" + pageID).find("#tasksfin").append(taskElem);
+                    taskElem.find("#deadlinetext").text("Refreshes at:");
+                    $(this).remove();
+                });
+            } else {
+                $(this).removeClass("dgrey");
+                $(this).addClass("red");
+                $(this).text("Are you sure?");
+            }
+        });
+    }
 
     taskElem.find("#title").text(task.Name);
     taskElem.find("#description").text(task.Desc);
@@ -155,13 +177,33 @@ let taskSnippet =`
             <p id="description" class="description"></p>
         </div>
         <div class="margin-left">
-            <p class="margin-6">Due by: <span id="nextdeadline"></span></p> 
+            <p id="deadlinetext" class="margin-6">Due by: <span id="nextdeadline"></span></p> 
             <div> <p class="margin-6"> <span id="frequency"></span> x <span id="freqmult"></span></p> </div>
         </div>
     </div>
     <div class="inline-block">
         <div id="assigned" class="inline-element"></div>
         <button id='task-finish' class='inline-element float-right bottom dgrey'>Finish</button>
+    </div>
+</div>`;
+
+let taskFinishedSnippet =`
+<div class="box-element task">
+    <div id="header" class="task-header">
+        <h3 id="title" class="task-header-element"></h3>
+        <button id='task-delete' class='task-header-element button float-right dgrey'>Delete</button>
+    </div>
+    <div class="rowbox">
+        <div id="descriptionbox" class="desc-box">
+            <p id="description" class="description"></p>
+        </div>
+        <div class="margin-left">
+            <p class="margin-6">Refreshes at: <span id="nextdeadline"></span></p> 
+            <div> <p class="margin-6"> <span id="frequency"></span> x <span id="freqmult"></span></p> </div>
+        </div>
+    </div>
+    <div class="inline-block">
+        <div id="assigned" class="inline-element"></div>
     </div>
 </div>`;
 

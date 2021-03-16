@@ -1,7 +1,5 @@
 <?php
 
-use JetBrains\PhpStorm\Pure;
-
 require_once 'Database.php';
 require_once 'Allocator.php';
 
@@ -22,19 +20,6 @@ class Task implements IDBConvert, JsonSerializable
         return Task::freqConvert($this->Frequency) * $this->FreqMult * $this->Length;
     }
 
-    public function checkNext(): void
-    {
-        $time = time();
-
-        if($this->Next < $time) {
-            $freqtime = Task::freqTime($this->Frequency);
-            $this->Next += (($time - $this->Next) / $freqtime + 1) * $freqtime;
-            $this->Completed = false;
-
-            (new TaskDB(-1))->updateNext($this->ID, $this->Next);
-        }
-    }
-
     public static function fromRow(array $row) : Task
     {
         $task = new Task();
@@ -47,12 +32,10 @@ class Task implements IDBConvert, JsonSerializable
         $task->FreqMult = $row['FreqMult'] ?? 1;
         $task->GroupID = $row['GroupID'] ?? -1;
         $task->Length = $row['Length'] ?? -1;
-        $task->Completed = $row['Completed'] ?? -1;
+        $task->Completed = boolval($row['Completed']) ?? -1;
         $task->Next = $row['Next'] ?? -1;
 
         $task->FreqMult = min(12, max(1, $task->FreqMult));
-
-        $task->checkNext();
 
         return $task;
     }
@@ -86,6 +69,24 @@ class Task implements IDBConvert, JsonSerializable
 
         $stmt->close();
         return $return;
+    }
+
+    public static function checkNext(TaskDB $taskDB, Task|false $task): Task|false
+    {
+        if($task === false) {
+            return false;
+        }
+
+        $time = time();
+
+        if($task->Next < $time) {
+            $freqtime = Task::freqTime($task->Frequency);
+            $task->Next += ((($time - $task->Next) / $freqtime) + 1) * $freqtime;
+            $task->Completed = false;
+            $taskDB->updateNext($task->ID, $task->Next);
+        }
+
+        return $task;
     }
 
     public function jsonSerialize()
@@ -170,16 +171,23 @@ class TaskDB extends Database
         $stmt->bindValue(':taskID', $taskID, SQLITE3_INTEGER);
         $stmt->bindValue(':userID', $this->userID, SQLITE3_INTEGER);
 
-        return Task::fetchSingle($stmt);
+        return Task::checkNext($this, Task::fetchSingle($stmt));
     }
 
     public function getGroupsTasks(int $groupID): array|false
     {
-        $stmt = $this->prepare('SELECT Task.* FROM Task WHERE Task.GroupID = :groupID');
+        $stmt = $this->prepare('SELECT Task.* FROM Task WHERE Task.GroupID = :groupID ORDER BY Next;');
         $stmt->bindValue(':groupID', $groupID, SQLITE3_INTEGER);
         $stmt->bindValue(':userID', $this->userID, SQLITE3_INTEGER);
 
-        return Task::fetch($stmt);
+        $res = Task::fetch($stmt);
+        if($res === false) return false;
+
+        foreach ($res as $task){
+            Task::checkNext($this, $task);
+        }
+
+        return $res;
     }
 
     public function getAssigned(int $taskID): array|false
@@ -260,7 +268,6 @@ class TaskDB extends Database
         $userID = $userID ?? $this->userID;
 
         $stmt = $this->prepare('DELETE FROM Assigned WHERE TaskID = ? and UserID = ?');
-
         $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
         $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
 
@@ -270,12 +277,22 @@ class TaskDB extends Database
     // ------------------------------------------------------------------------
     // UPDATE
 
-    public function updateNext(int $taskID, int $time)
+    public function updateNext(int $taskID, int $time): bool
     {
-        $stmt = $this->prepare('UPDATE Task SET Next = ? AND Completed = 0 WHERE ID = ?');
-
+        $stmt = $this->prepare('UPDATE Task SET Next = ?, Completed = 0 WHERE ID = ?');
         $stmt->bindValue(1, $time, SQLITE3_INTEGER);
         $stmt->bindValue(2, $taskID, SQLITE3_INTEGER);
+
+        $res = $this->finish($stmt);
+
+        //echo $res ? 'true' : 'false';
+        return true;
+    }
+
+    public function finishTask(int $taskID): bool
+    {
+        $stmt = $this->prepare('UPDATE Task SET Completed = 1 WHERE ID = ?');
+        $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
 
         return $this->finish($stmt);
     }
