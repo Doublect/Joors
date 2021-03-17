@@ -267,7 +267,7 @@ class TaskDB extends Database
     {
         $userID = $userID ?? $this->userID;
 
-        $stmt = $this->prepare('DELETE FROM Assigned WHERE TaskID = ? and UserID = ?');
+        $stmt = $this->prepare('DELETE FROM Assigned WHERE TaskID = ? AND UserID = ?');
         $stmt->bindValue(1, $taskID, SQLITE3_INTEGER);
         $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
 

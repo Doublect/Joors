@@ -15,6 +15,6 @@ class Input
             return Input::clean($data);
         } else {
             return $data;
-        }
+         }
     }
 }

@@ -24,6 +24,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['Action']) && isset($_PO
             $groupDB->inviteUser($user->ID);
             echo json_encode($user);
         } elseif($action === 'Remove' && $groupDB->isMember($user->ID)) {
+            foreach($groupDB->getUsersTasks($user->ID) as $task){
+                unallocate($task, $user->ID);
+            }
             $groupDB->removeMember($user->ID);
             echo json_encode($user);
         }

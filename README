@@ -19,3 +19,15 @@ home.html - Main page for logged in users, contains the header and side bars, lo
 empty.html - Empty html page, for loading in when a user has no groups
 group.html - Displays a groups tasks, allows for task addition, deletion, and member managament, page is never loaded separately, only within home.html
 
+
+
+
+Codes:
+2000 - No user
+2001 - Incorrect password
+2002 - No session
+2003 - Name taken
+2004 - Invalid email
+2005 - Email taken
+
+3001 - No tasks

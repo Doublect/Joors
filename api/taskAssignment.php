@@ -31,13 +31,13 @@ function taskAssign($action, $task, $targetID): int|null {
     if($targetID == -2) {
         $userID = autoAssign($task->ID, $task->GroupID);
         if($userID && $action == 'Add') {
-            allocate($task, (array)$userID);
+            allocate($task, array($userID));
             return $userID;
         }
     } elseif($targetID != -1 && (new GroupDB($targetID))->isMember($targetID)) {
-        if($action = 'Add') {
+        if($action == 'Add') {
             allocate($task, (array)$targetID);
-        } elseif($action = 'Remove') {
+        } elseif($action == 'Remove') {
             unallocate($task, $targetID);
         }
         return $targetID;

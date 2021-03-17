@@ -16,27 +16,29 @@ require_once 'Group.php';
  * </p>
  */
 function allocate(Task $task, array $userIDs): void {
+    // Create databases
     $taskDB = new TaskDB(-1);
-    if($taskDB->isAssigned($task->ID)) return;
-
     $groupDB = new GroupDB($task->GroupID);
 
+    // Array of users assigned to task
     $assigned = $taskDB->getAssigned($task->ID);
-    $assignedNum = count($assigned);
-    $newAssignedNum = $assignedNum + count($userIDs);
+    $assignedCnt = count($assigned);
+    $newAssignedCnt = $assignedCnt + count($userIDs);
 
-    $taskload = $task->getLoad();
+    $taskLoad = $task->getLoad();
 
+    // Loop over all assigned users, to reduce the load assigned to them
     foreach($assigned as $user) {
-        $userload = new LoadPair($user, (int)($taskload / $newAssignedNum) - (int)($taskload / $assignedNum));
+        $userLoad = new LoadPair($user, (int)($taskLoad / $newAssignedCnt) - (int)($taskLoad / $assignedCnt));
 
-        $groupDB->changeUserLoad($userload);
+        $groupDB->changeUserLoad($userLoad);
     }
 
+    // Assign the remaining load to the new users and assign them to the task
     foreach($userIDs as $user) {
-        $userload = new LoadPair($user, (int)($taskload / $newAssignedNum));
+        $userLoad = new LoadPair($user, (int)($taskLoad / $newAssignedCnt));
 
-        $groupDB->changeUserLoad($userload);
+        $groupDB->changeUserLoad($userLoad);
         $taskDB->assignTask($task->ID, $user);
     }
 }
@@ -54,28 +56,30 @@ function allocate(Task $task, array $userIDs): void {
  * </p>
  */
 function unallocate(Task $task, int $userID): void {
-    $taskDB = new TaskDB($userID);
-    if(!$taskDB->isAssigned($task->ID)) return;
 
+    // Create databases and make sure user is assigned to task
+    $taskDB = new TaskDB($userID);
     $groupDB = new GroupDB($task->GroupID);
+    if(!$taskDB->isAssigned($task->ID, $userID)) return;
+
     $assigned = $taskDB->getAssigned($task->ID);
     $assignedNum = count($assigned);
 
-    $taskload = $task->getLoad();
+    $taskLoad = $task->getLoad();
 
     if($assignedNum > 1) {
         $newAssignedNum = $assignedNum - 1;
 
         foreach ($assigned as $user) {
-            $userload = new LoadPair($user, (int)($taskload / $newAssignedNum) - (int)($taskload / $assignedNum));
+            $userLoad = new LoadPair($user, (int)($taskLoad / $newAssignedNum) - (int)($taskLoad / $assignedNum));
 
-            $groupDB->changeUserLoad($userload);
+            $groupDB->changeUserLoad($userLoad);
         }
     }
 
-    $userload = new LoadPair($userID, -$taskload);
+    $userLoad = new LoadPair($userID, -$taskLoad);
 
-    $groupDB->changeUserLoad($userload);
+    $groupDB->changeUserLoad($userLoad);
     $taskDB->unassignTask($task->ID);
 }
 
@@ -90,13 +94,13 @@ function unallocate(Task $task, int $userID): void {
  * @return int|false Return a UserID on success,
  * or false on failure
  */
-function autoAssign(int $taskID, int $groupID): int|false
+function autoAssign(Task $task): int|false
 {
-    $groupDB = new GroupDB($groupID);
+    $groupDB = new GroupDB($task->GroupID);
     $taskDB = new TaskDB(-1);
     $assignedSet = array();
 
-    foreach($taskDB->getAssigned($taskID) as $assigned) {
+    foreach($taskDB->getAssigned($task->ID) as $assigned) {
         $assignedSet[intval($assigned)] = true;
     }
 

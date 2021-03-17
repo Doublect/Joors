@@ -160,29 +160,13 @@ class GroupDB extends Database
         return $return;
     }
 
-    public function getMinimumLoad(): int|false
+    public function getUsersTasks(int $userID): array|false
     {
-        $stmt = $this->prepare('SELECT UserID, Load FROM UserGroup WHERE GroupID = ?');
+        $stmt = $this->prepare('SELECT Task.* FROM Task WHERE GroupID = ? AND ID IN (SELECT TaskID FROM Assigned WHERE UserID = ?)');
         $stmt->bindValue(1, $this->groupID, SQLITE3_INTEGER);
+        $stmt->bindValue(2, $userID, SQLITE3_INTEGER);
 
-        $res = $stmt->execute();
-
-        if(!($row = $res->fetchArray())) {
-            $stmt->close();
-            return false;
-        }
-
-        $minLoad = PHP_INT_MAX;
-        $id = -1;
-
-        do {
-            if($row['Load'] < $minLoad) {
-                $minLoad = $row['Load'];
-                $id = $row['UserID'];
-            }
-        } while ($row = $res->fetchArray());
-
-        return $id;
+        return Task::fetch($stmt);
     }
 
     // ------------------------------------------------------------------------

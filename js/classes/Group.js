@@ -2,7 +2,14 @@ import User from "./User.js";
 import Task from "./Task.js";
 import * as Library from "./Library.js";
 
+/**
+ * The class representing the php version of a group.
+ */
 export default class Group {
+    ID;
+    Name;
+    OwnerID;
+
     constructor(ID, Name, OwnerID) {
         this.ID = ID;
         this.Name = Name;
@@ -10,6 +17,9 @@ export default class Group {
     }
 }
 
+/**
+ * An extension of Group, which connects tasks and users to a group.
+ */
 export class GroupEntity {
     Chores = {};
     Members = [];
@@ -44,8 +54,10 @@ export async function getChores(groupEntity) {
 
         let parsed = JSON.parse(data);
 
+        // Cast and store tasks
         for (let i = 0; i < parsed.length; i++) {
             groupEntity.Chores[parsed[i].ID] = Object.assign(new Task, parsed[i]);
+            groupEntity.Chores[parsed[i].ID].Assigned = new Set(groupEntity.Chores[parsed[i].ID].Assigned);
         }
     });
 

@@ -17,7 +17,7 @@ export function addUserAsOption(user, parent)
     let option = $("<option></option>");
 
     // Set attribute and name
-    option.attr("id", user.ID);
+    option.attr("value", user.ID);
     option.text(user.Name);
 
     // Add to parent

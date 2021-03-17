@@ -2,6 +2,7 @@
 
 require_once 'Database.php';
 require_once 'Group.php';
+require_once 'Task.php';
 require_once 'Input.php';
 
 class User implements IDBConvert, JsonSerializable
