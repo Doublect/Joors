@@ -5,6 +5,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
     error_reporting(E_ALL);
     ini_set('display_errors',1);
 
+
+    $version = phpversion();
+    print $version;
+
     // Check if variables are set
     if(isset($_POST['Username']) && isset($_POST['Password'])){
         require_once '../classes/User.php';

@@ -2,32 +2,6 @@ h2 {
     margin-bottom: 0.2em;
 }
 
-.box {
-    display: flex;
-    flex-direction: column;
-
-    width: auto;
-    background: inherit;
-}
-
-.rowbox {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    
-    align-items: center;
-    width: auto;
-    background: inherit;
-}
-
-.box-element {
-    width: max-content;
-    vertical-align: center;
-    justify-items: center;
-
-    margin: 0 10px 0 10px;
-}
-
 .inline-block {
     display: inline-block;
     width: 100%;
@@ -53,17 +27,20 @@ h2 {
     margin-right: 6px;
 }
 
-.section {
-    padding: 5px 30px 5px 30px;
-    margin: 20px 10px 20px 10px;
-    background: wheat;
-    border-radius: 20px;
+.user {
+    border: 1px solid #000;
+}
+
+.user:hover {
+    filter: brightness(85%);
 }
 
 .task {
     margin: 10px 0 10px 0;
     width: auto;
     background: lightgrey;
+
+    border: 1px solid #000;
 }
 
 .task-header {
@@ -102,15 +79,6 @@ h2 {
     overflow-wrap: break-word;
 }
 
-.overlay-content {
-    width: auto;
-    height: auto;
-
-    background: wheat;
-    opacity: 1;
-    z-index: 70;
-}
-
 .button {
     padding-top: 0;
     margin-top: -3px;
@@ -119,5 +87,5 @@ h2 {
 
 .bottom {
     bottom: 0;
-    margin: 0;
+    margin: auto 0 0 0;
 }

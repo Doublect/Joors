@@ -1,172 +1,226 @@
 import Group, * as G from "./classes/Group.js";
-import Page, {loadPage} from "./classes/Page.js";
 import GroupPage from "./classes/GroupPage.js";
-import * as Library from "./Library.js";
+import * as Library from "./classes/Library.js";
 
 let groups = {};
 export let users = {};
-let currentPage, homePage;
+let currentPage;
 
 $(function () {
     // Load groups
     loadGroups();
-
-    addControlBindings();
 });
 
-function addControlBindings() {
-    $("#previousbtn").on("click", function () {
-        currentPage = currentPage.previous();
-    });
-
-    $("#homebtn").on("click", function () {
-        goHome();
-    });
-}
-
+/**
+ * Loads the sidebar's content, refreshing if necessary.
+ */
 export function loadGroups() {
+    // Empty current content from sidebar, so a user can't do anything while the new state is loaded in
     $("#sidebar").empty();
 
+    // API call to retrieve the data of groups
     $.post('api/groupsGet.php', { Session : localStorage.getItem("Session") }, function (data) {
-        if(data === "2002") {
-            Library.LogOut();
-        } else {
-            if(data !== "") {
+        switch (data){
+            case "2002": // No session
+                Library.LogOut();
+                break;
+            case "": // No data
+                break;
+            default:
                 data = JSON.parse(data);
 
+                // Make sure data.Member exists, these are the groups the user is a member of
                 if(data.Member) {
                     for (let i = 0; i < data.Member.length; i++) {
+                        // Cast received data into correct type (Group) and store it
                         let group = Object.assign(new Group, data.Member[i]);
                         groups[group.ID] = new G.GroupEntity(group);
 
+                        // Create group element on the sidebar
                         createGroupElement(group);
                     }
                 }
 
+                // Make sure data.Invited exists
                 if(data.Invited) {
                     for (let i = 0; i < data.Invited.length; i++) {
+                        // Cast received data into correct type (Group) and store it
                         let group = Object.assign(new Group, data.Invited[i]);
                         groups[group.ID] = new G.GroupEntity(group);
 
+                        // Create invitation element on the sidebar
                         createInvititationElement(group);
                     }
                 }
-            }
 
-            groupCreate();
+                // Add the group creation button to sidebar
+                groupCreate();
 
-            if(currentPage === undefined) {
-                //currentPage = new Page(undefined, 'homepage.html');
-                if(data.Member) {
-                    currentPage = new GroupPage(homePage, 'grouppage.html', groups[data.Member[0].ID]);
-                } else {
-                    currentPage = new Page(undefined, 'homepage.html');
+                // If no page is loaded then load the first group or an empty page
+                if(currentPage === undefined) {
+                    if(data.Member) {
+                        loadGroupPage(data.Member[0].ID)
+                    } else {
+                        goToEmpty();
+                    }
                 }
-
-                loadPage(currentPage);
-                homePage = currentPage;
-            }
+                break;
         }
     });
 }
 
+/**
+ * Handles group creation logic:
+ * First, creates a button called "Create new group"
+ * On click, the button is replaced by a form
+ * When submitted with a name, calls 'groupCreate.php' and reloads sidebar
+ */
 function groupCreate() {
     const sidebar = $("#sidebar");
+    let createButton = $("#groupbtn");
+    let p;
 
-    let createbutton = $("#groupbtn");
-    let createform = $("#groupform");
+    // Check if createButton exists
+    if(createButton.length === 0) {
+        // Make sure there is no form
+        $("#groupform").remove();
 
-    if(createbutton.length === 0) {
-        createform.remove();
+        // Create button
+        p = $("<p id='groupbtn' class='sbar-element'>Create new group</p>");
 
-        let p = $($.parseHTML("<p id='groupbtn' class='sbar-element'>Create new group</p>"));
-
+        // Make sure button calls this function
         p.on("click", function (){
             groupCreate();
         });
 
-        sidebar.append(p);
+        // Add an extra line, to separate from invitations/groups
+        sidebar.append($("<hr>"));
     } else {
-        createbutton.remove();
+        // Make sure there is no button
+        createButton.remove();
 
-        let p = $($.parseHTML("<form id='groupform' style='padding-left: 20px;'> <input id='groupname'> <input class='dgrey' type='submit' value='Create'></form>"));
+        // Create form
+        p = $("<form id='groupform' class='rowbox'> <input id='groupname'> <input class='dgrey' type='submit' value='Create'></form>");
+
 
         p.on("submit", function (){
             let name = $("#groupform").find("#groupname").val();
 
-            if(name.length > 0) {
+            // Check name length
+            if(name.length > 0 && name.length <= 64) {
                 $.post('api/groupCreate.php', {Name: name, Session: localStorage.getItem("Session")}, function () {
                     loadGroups();
                 });
             }
-
-            groupCreate();
         });
-
-        sidebar.append(p);
     }
 
+    // Add to sidebar
+    sidebar.append(p);
 }
 
+/**
+ * Adds a button for the group, which on click opens the group's page.
+ * @param {Group} group The group for which the sidebar entry should be made. Requires Name and ID.
+ */
 function createGroupElement(group) {
     const sidebar = $("#sidebar");
 
-    let p = $("<p></p>").text(group.Name);
-    p.addClass("sbar-element");
+    // Create element
+    let p = $("<p class='sbar-element'></p>").text(group.Name);
     p.attr("id", group.ID);
 
+    // On click load group's page
     p.on("click", function () {
         loadGroupPage(group.ID);
     });
 
+    // Add to sidebar
     sidebar.append(p);
 }
 
+/**
+ * Adds a invitation, which can be accepted or rejected, using the 'inviteSnippet' html string.
+ * @param group The group for which the sidebar entry should be made. Requires Name and ID.
+ */
 function createInvititationElement(group) {
-    const sidebar = $("#sidebar");
+    // Create element
+    let inv = $($.parseHTML(inviteSnippet));
+    inv.find("#groupname").text(group.Name);
 
-    let p = $("<p></p>").text(group.Name);
-    p.addClass("sbar-element");
-    p.attr("id", group.ID);
-
-    let acc = $("<p></p>").text("Accept");
-    let dec = $("<p></p>").text("Decline");
-
-    acc.addClass("sbar-element inline-element");
-    acc.attr("id", group.ID + "btn");
-    dec.addClass("sbar-element inline-element");
-    dec.attr("id", group.ID + "btn");
-
-    acc.on("click", function () {
+    // Logic for accept button
+    inv.find("#invite-acc").on("click", function () {
         handleInvitation(group.ID, "Add");
     });
 
-    dec.on("click", function () {
+    // Logic for reject button
+    inv.find("#invite-dec").on("click", function () {
         handleInvitation(group.ID, "Remove");
     });
 
-    sidebar.append(p);
-    sidebar.append(acc);
-    sidebar.append(dec);
+    // Add to sidebar
+    $("#sidebar").append(inv);
 }
 
+/**
+ * Wrapper function for 'groupInvitation.php' calls, updates sidebar on success.
+ * @param {number} groupID The group for which the user accepted or rejected the inviation.
+ * @param {string} action The type of the action either "Add" or "Remove".
+ */
 function handleInvitation (groupID, action) {
     $.post("api/groupInvitation.php", { Action : action, GroupID : groupID, Session : localStorage.getItem("Session")},
-        function (){
+        function (data){
+            if(data === "2002") {
+                return Library.LogOut();
+            }
             loadGroups();
         })
 }
 
+/**
+ * Loads the 'group.html' page of specified group.
+ * @param groupID The group which is to be shown.
+ */
 export function loadGroupPage(groupID) {
-    currentPage.previous();
-    currentPage = new GroupPage(homePage, 'grouppage.html', groups[groupID]);
-
-    loadPage(currentPage);
-}
-
-export function goHome() {
-    while(currentPage.ID > 0) {
-        currentPage = currentPage.remove();
+    if(currentPage) {
+        // Remove current page's elements
+        $("#content").remove();
     }
-    currentPage.show();
+
+    currentPage = new GroupPage(groups[groupID]);
+    let div = $("<div id='content'></div>");
+
+    div.load('group.html', function () {
+        currentPage.onLoad();
+    });
+
+    $("#contentbox").append(div);
 }
+
+/**
+ * Loads an empty page.
+ */
+export function goToEmpty() {
+    if(currentPage) {
+        // Remove current page's elements
+        $("#content").remove();
+
+        currentPage = undefined;
+    }
+
+    // Load empty page
+    let div = $("<div id='content'></div>");
+    $("#contentbox").append(div);
+    div.load('empty.html');
+}
+
+let inviteSnippet = `
+    <hr>
+    <div class="sbar-element rowbox">
+        <p id="groupname"></p>
+        <div class="margin-left">
+            <button id='invite-acc' class='green'>Accept</button>
+            <button id='invite-dec' class='margin-l6 red'>Decline</button>
+        </div>
+    </div>
+`;

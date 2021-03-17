@@ -1,6 +1,6 @@
 import User from "./User.js";
 import Task from "./Task.js";
-import * as Library from "../Library.js";
+import * as Library from "./Library.js";
 
 export default class Group {
     constructor(ID, Name, OwnerID) {

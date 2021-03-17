@@ -1,39 +1,37 @@
 import * as G from "./Group.js";
-import Task, {createTaskElement, createTaskForm, assignUserEvent, parseNewTaskForm} from "./Task.js";
-import Page from "./Page.js";
-import {users, goHome, loadGroups} from "../home.js";
-import * as Library from "../Library.js";
+import Task, {createTaskElement, createTaskForm} from "./Task.js";
+import {users, goToEmpty, loadGroups} from "../home.js";
+import * as Library from "./Library.js";
 
-export default class GroupPage extends Page
+export default class GroupPage
 {
     groupEntity;
 
-    constructor(previous, current, GroupEntity) {
-        super(previous, current);
+    constructor(GroupEntity) {
         this.groupEntity = GroupEntity;
     }
 
     onLoad() {
-        let pageID = this.ID;
+        let headDiv = $("#content");
         let groupEntity = this.groupEntity;
-        let membersreq;
-        let newtaskassign = $("#assignedselect");
+        let membersDeferred;
+        let newTaskAssign = headDiv.find("#assignedselect");
 
-        createHeaderElement(this.groupEntity.Group, pageID);
+        createHeaderElement(this.groupEntity.Group);
 
         if(JSON.parse(localStorage.getItem("Session")).OwnerID !== this.groupEntity.Group.OwnerID) {
-            $("#usermanagement").remove();
+            headDiv.find("#usermanagement").remove();
         }
 
         if (this.groupEntity.Members.length === 0) {
-             membersreq = G.getMembers(this.groupEntity).then(
+             membersDeferred = G.getMembers(this.groupEntity).then(
                 function (res) {
                     for (let i = 0; i < res.length; i++) {
                         if(!users[res[i].ID])
                             users[res[i].ID] = res[i];
 
-                        createUserElement(res[i], pageID);
-                        Library.addUserAsOption(res[i], newtaskassign);
+                        createUserElement(res[i], true);
+                        Library.addUserAsOption(res[i], newTaskAssign);
                     }
 
                     let invited = groupEntity.Invited;
@@ -42,44 +40,49 @@ export default class GroupPage extends Page
                         if(!users[invited[i].ID])
                             users[invited[i].ID] = invited[i];
 
-                        createUserElement(invited[i], pageID);
+                        createUserElement(invited[i], false);
                     }
                 }, function () {
                     alert("Couldn't load members list!");
                 });
         } else {
             for (let i = 0; i < this.groupEntity.Members.length; i++) {
-                createUserElement(this.groupEntity.Members[i], this.ID);
-                Library.addUserAsOption(this.groupEntity.Members[i], newtaskassign);
+                createUserElement(this.groupEntity.Members[i], true);
+                Library.addUserAsOption(this.groupEntity.Members[i], newTaskAssign);
+            }
+            for (let i = 0; i < this.groupEntity.Invited.length; i++) {
+                createUserElement(this.groupEntity.Invited[i], false);
             }
         }
 
-        $("#addbtn").on("click", function (event) {
+        headDiv.find("#member-invite").on("click", function (event) {
             event.preventDefault();
-            groupMemberChange($("#username")[0].value, groupEntity, "Add", pageID);
+            groupMemberChange($(this).siblings("#member-name")[0].value, groupEntity, "Add");
         });
-        $("#removebtn").on("click", function (event) {
+        headDiv.find("#member-remove").on("click", function (event) {
             event.preventDefault();
-            groupMemberChange($("#username")[0].value, groupEntity, "Remove", pageID);
+            groupMemberChange($(this).siblings("#member-name")[0].value, groupEntity, "Remove");
         });
 
-        // Get chores and display them
-        $.when(membersreq, G.getChores(this.groupEntity)).then(
-            function (memres, res) {
+        // Wait for users and chores and display them
+        $.when(membersDeferred, G.getChores(this.groupEntity)).then(
+            function (_, res) {
                 for (const key in res) {
-                    createTaskElement(res[key], pageID);
+                    if(res.hasOwnProperty(key)){
+                          createTaskElement(groupEntity, Object.assign(new Task, res[key]));
+                    }
                 }
 
-                createTaskForm(groupEntity, pageID);
+                createTaskForm(groupEntity);
             }, function () {
                 alert("Couldn't load task list!");
         });
     }
 }
 
-export function createHeaderElement(group, pageID)
+export function createHeaderElement(group)
 {
-    const header = $("#content-" + pageID).find("#group-header");
+    const header = $("#content").find("#group-header");
 
     // Show the name of the groupEntity
     header.find("#group-title").text(group.Name);
@@ -88,13 +91,13 @@ export function createHeaderElement(group, pageID)
     let parsed = JSON.parse(session);
 
     if(parsed.OwnerID === group.OwnerID) {
-        let deletebtn = $($.parseHTML("<button id='group-remove' class='inline-element float-right dgrey'>Delete</button>"));
+        let deleteButton = $($.parseHTML("<button id='group-remove' class='inline-element float-right dgrey'>Delete</button>"));
 
-        deletebtn.on("click", function () {
+        deleteButton.on("click", function () {
             if ($(this).hasClass("red")) {
                 $.post("api/groupDelete.php", { GroupID : group.ID, Session : session }, function (){
                     loadGroups();
-                    goHome();
+                    goToEmpty();
                 });
             } else {
                 $(this).removeClass("dgrey");
@@ -103,26 +106,29 @@ export function createHeaderElement(group, pageID)
             }
         });
 
-        header.append(deletebtn);
+        header.append(deleteButton);
     }
 }
 
-function createUserElement(user, pageID)
+function createUserElement(user, isMember)
 {
-    const membersdiv = $("#content-" + pageID).find("#members");
+    const membersdiv = $("#content").find("#members");
 
-    let p = $("<p></p>").text(user.Name);
-    p.addClass("box-element");
+    let p = $("<p class='box-element padding'></p>").text(user.Name);
+
+    if(isMember === true){
+        p.addClass("lgrey user");
+    }
 
     membersdiv.append(p);
 }
 
-function deleteUserElement(user, pageID)
+function deleteUserElement(user)
 {
-    $("#content-" + pageID).find("#members").children().remove("p:contains(" + user.Name + ")");
+    $("#content").find("#members").children().remove("p:contains(" + user.Name + ")");
 }
 
-function groupMemberChange(Username, groupEntity, action, pageID)
+function groupMemberChange(Username, groupEntity, action)
 {
     $.post("api/groupMembership.php", { Action : action, Username : Username, GroupID : groupEntity.Group.ID, Session : localStorage.getItem("Session")},
         function (data) {
@@ -141,14 +147,14 @@ function groupMemberChange(Username, groupEntity, action, pageID)
                 users[user.ID] = user;
 
                 if (action === "Add") {
-                    groupEntity.Members.push(user.ID);
-                    createUserElement(user, pageID);
+                    groupEntity.Invited.push(user.ID);
+                    createUserElement(user, false);
 
                     let addEvent = new CustomEvent("userAdd", { detail: { userID: user.ID}} );
                     dispatchUserEvent(addEvent);
 
                 } else if (action === "Remove") {
-                    deleteUserElement(user, pageID);
+                    deleteUserElement(user);
 
                     let removeEvent = new CustomEvent("userRemove", { detail: { userID: user.ID }} );
                     dispatchUserEvent(removeEvent);
@@ -156,6 +162,7 @@ function groupMemberChange(Username, groupEntity, action, pageID)
             }
         });
 }
+
 
 function dispatchUserEvent(userEvent) {
     $("#assignedselect").each( function () {

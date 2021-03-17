@@ -1,0 +1,21 @@
+Joors - a web application to track reoccurring chores
+
+
+
+Folder structure:
+
+api - Contains all php files used for ajax calls
+auth - Contains database for storing sessions and php class file for handling and checking for sessions.
+classes - Contains general php classes for handling specific databases, input cleaning and task allocation
+css - Contains .css files for webpages
+db - Contains main database, schema and test data
+js - Contains all javascript files, including jquery
+
+
+HTML files:
+
+index.html - Login and registration page, leads to home.html
+home.html - Main page for logged in users, contains the header and side bars, loads separate webpages into remaining space
+empty.html - Empty html page, for loading in when a user has no groups
+group.html - Displays a groups tasks, allows for task addition, deletion, and member managament, page is never loaded separately, only within home.html
+

@@ -1,5 +1,3 @@
-'use strict';
-
 export default class User
 {
     constructor(ID, Email, Name, Password, CreationTime) {

@@ -65,7 +65,10 @@ body {
 
 .sidebar .sbar-element {
     width: auto;
-    padding: 0 0 0 20px;
+    padding: 16px 0 16px 20px;
+    margin: 0;
+
+    background: inherit;
 }
 
 .sbar-element:hover {
@@ -75,18 +78,38 @@ body {
     margin-left: 300px;
 }
 
-.overlay {
-    position: absolute;
 
-    padding: 0;
-    margin:0;
+.box {
+    display: flex;
+    flex-direction: column;
 
-    width: 100%;
-    height: 100%;
+    width: auto;
+    background: inherit;
+}
 
-    z-index: 50;
-    opacity: 0.25;
-    background: black;
+.rowbox {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    align-items: center;
+    width: auto;
+    background: inherit;
+}
+
+.box-element {
+    width: max-content;
+    vertical-align: center;
+    justify-items: center;
+
+    margin: 0 10px 0 10px;
+}
+
+.section {
+    padding: 5px 30px 5px 30px;
+    margin: 20px 10px 20px 10px;
+    background: wheat;
+    border-radius: 20px;
 }
 
 .text-center {
@@ -122,6 +145,11 @@ body {
     color: white;
 }
 
+.green {
+    background: yellowgreen;
+    color: white;
+}
+
 .black {
     background: black;
     color: white;
@@ -130,6 +158,11 @@ body {
 .dgrey {
     background: darkgrey;
     color: white;
+}
+
+.lgrey {
+    background: lightgrey;
+    color: black;
 }
 
 .center {

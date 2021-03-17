@@ -25,7 +25,7 @@ CREATE TABLE UserGroup (
 DROP TABLE "Group";
 CREATE TABLE "Group" (
     ID INTEGER,
-    Name varchar(256),
+    Name varchar(64),
     OwnerID int,
     PRIMARY KEY (ID)
 );
@@ -34,7 +34,7 @@ DROP TABLE Task;
 CREATE TABLE Task (
     ID INTEGER,
     GroupID int,
-    Name varchar(128),
+    Name varchar(64),
     Desc varchar(1024),
     Frequency varchar(32),
     FreqMult int,

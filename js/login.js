@@ -1,39 +1,18 @@
 import User from "./classes/User.js";
 
 $(function () {
-
-    $('#overlay-shadow').on("click", function() {
-        hideOverlay();
-    });
-
-    $('#loginlink').on("click", function() {
-        hideOverlay();
-    });
-
-    $('#registerlink').on("click", function() {
-        showOverlay();
-    });
-
     loginForm();
 
     registerForm();
 });
 
-function hideOverlay() {
-    $("#registerbox").hide();
-}
-
-function showOverlay() {
-    $("#registerbox").show();
-}
-
 function loginForm() {
-    $("#loginform").on("submit", function (event) {
+    $("#login-form").on("submit", function (event) {
         event.preventDefault();
 
-        let array = $("#loginform").serializeArray();
+        let array = $("#login-form").serializeArray();
         let obj = {};
-        let errors = $("#lerrors");
+        let errors = $("#login-errors");
 
         // Make sure errors is empty
         errors.empty();
@@ -74,12 +53,12 @@ function loginForm() {
 }
 
 function registerForm() {
-    $("#registerform").on("submit", function (event) {
+    $("#register-form").on("submit", function (event) {
         event.preventDefault();
 
-        let array = $("#registerform").serializeArray();
+        let array = $("#register-form").serializeArray();
         let obj = {};
-        let errors = $("#rerrors");
+        let errors = $("#register-errors");
 
         // Make sure errors is empty
         errors.empty();
@@ -88,28 +67,20 @@ function registerForm() {
             obj[array[i].name] = array[i].value;
         }
 
-        if(obj['rpassword'] !== obj['rpassword_check']) {
+        if(obj['r-pasword'].length < 6 || obj['r-pasword'].length > 128) {
+            errors.append("Please use a password between 6 and 128 characters!");
+            return false;
+        }
+
+        if(obj['r-password'] !== obj['r-pasword_check']) {
             errors.append("Passwords don't match!");
             return false;
         }
 
-        if(obj['rpassword'].length < 6) {
-            errors.append("Please use a password longer than 5 characters!");
-            return false;
-        }
-
-        if(!$("input[name='data_collection']").prop('checked')) {
-            errors.append("Please check the tick box to register.");
-            return false;
-        }
-
-        let user = new User(null, obj['email'], obj['rusername'], obj['rpassword'], null);
+        let user = new User(null, obj['email'], obj['rusername'], obj['r-pasword'], null);
 
         $.post("api/userCreate.php", { User : JSON.stringify(user) },
             function (data) {
-
-                console.log(data);
-
                 switch (data) {
                     case "2003":
                         errors.append("Name is already taken.");
@@ -118,7 +89,7 @@ function registerForm() {
                         errors.append("Invalid email format.");
                         break;
                     case "2005":
-                        errors.append("Email already taken.");
+                        errors.append("Email is already taken.");
                         break;
                     default:
                         data = JSON.parse(data);
